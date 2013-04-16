@@ -8,3 +8,4 @@ Description: This package contains functions to carry out statistical
     various type of regression analyses.
 Collate:
     'datashield.gee.r'
+    'alpha.phi.ds.r'
