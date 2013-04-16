@@ -1,1 +1,2 @@
 export(datashield.gee)
+export(datashield.glm)
