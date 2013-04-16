@@ -9,3 +9,4 @@ Description: This package contains functions to carry out statistical
 Collate:
     'datashield.gee.r'
     'alpha.phi.ds.r'
+    'beta.vect.ds.r'

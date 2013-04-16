@@ -20,6 +20,6 @@
 }
 \description{
   This function is required by the function
-  \code{datashiedl.gee}
+  \code{datashield.gee}
 }
 

@@ -1,4 +1,4 @@
-#' This function is required by the function \code{datashiedl.gee}
+#' This function is required by the function \code{datashield.gee}
 #'
 #' @title Combines some estimates (alpha and phi) obtained from the different studies
 #'
