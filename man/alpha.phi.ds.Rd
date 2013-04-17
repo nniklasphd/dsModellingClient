@@ -19,7 +19,6 @@
   a list that contains alpha and phi
 }
 \description{
-  This function is required by the function
-  \code{datashield.gee}
+  TFunction required by the function \code{datashield.gee}
 }
 

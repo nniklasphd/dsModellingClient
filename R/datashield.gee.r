@@ -9,7 +9,7 @@
 #'
 #' @param opals character strings that represent the URL of the servers where 
 #' the study datasets are stored
-#' @param formula an object of class 'formula' which describes the model to be fitted
+#' @param formula an object of class \code{formula} which describes the model to be fitted
 #' @param cluster a vector that holds the clusters (i.e.family IDs)
 #' @param family a description of the error distribution function to use in the model
 #' @param link a description of the link function to be used in the model
@@ -17,26 +17,24 @@
 #' @param corstr a character string that specifies the correlation structure to use
 #' @param start.betas starting values for the parameters estimates
 #' @param user.mats user-defined correlation matrices (one per dataset) used 
-#' if the paramter 'corstr' is set to 'fixed'
+#' if the paramter \code{corstr} is set to 'fixed'
 #' @param control a list of parameters for controlling the fitting process
 #' @details This function requires to log into the opal servers where the data 
-#' are stored (one dataset per study). The dataSHIELD environment does not allow for 
-#' the passing of string literals as arguments, so the correlation structures and the link 
-#' function are specified as integers which are internally turned into the required
-#' characters. 
-#' Set the parameter 'corstr' to set to 1, 2, 3 , 4 or 5 for respectively 'ar1', 
-#' 'exchangeable', 'independence', 'fixed', or 'unstructured' correlation 
-#' structures. Set the parameter 'link' to 1, 2, 3, 4, or 5 for respectively the 'logit', 
-#' 'identity', 'inverse', 'log' or 'probit' link functions.
-#' The 'binomial family' accepts the links 'logit', 'probit' and 'log';
-#' the 'gaussian family' accepts the links 'identity', 'log' and 'inverse'
-#' and the 'Gamma family' acepts the links 'inverse', 'identity' and 'log'.
+#' are stored (one dataset per study). Set the parameter \code{corstr} to set 
+#' to 1, 2, 3 , 4 or 5 for respectively 'ar1', 'exchangeable', 'independence', 
+#' 'fixed', or 'unstructured' correlation structures. Set the parameter \code{link}
+#' to 1, 2, 3, 4, or 5 for respectively the 'logit', 'identity', 'inverse', 'log' or 
+#' 'probit' link functions. The \code{binomial family} accepts the links 'logit', 
+#' 'probit' and 'log'; the \code{gaussian family} accepts the links 'identity', 'log' 
+#' and 'inverse' and the \code{Gamma family} acepts the links 'inverse', 'identity' and 'log'.
 #' @return coefficients estimates of the parameters of the fitted model
 #' @return stderrs standard errors of the estimates
 #' @return alpha correlation parameter, a correlation between any two correlated observations
 #' @return phi dispersion parameter
 #' @return working.corr.matrix the working correlation matrix
-#' @references Zeger, S. L., Liang, K. and Albert, P. S. (1988). Models for longitudinal data: a generalized estimating equation approach. Biometrics, 44, p1049-1060.
+#' @references Zeger, S. L., Liang, K. and Albert, P. S. (1988). 
+#' Models for longitudinal data: a generalized estimating equation approach. 
+#' Biometrics, 44, p1049-1060.
 #' @examples
 #' \dontrun{
 #' # put example here

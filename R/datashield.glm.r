@@ -17,10 +17,10 @@
 #' iteration of the IWLS fit.
 #' @return fitted.values: the fitted mean values, obtained by transforming the
 #' linear predictors by the inverse of the link function.
-#' @return rank: the numeric rank of the fitted linear model.
-#' @return family: the ‘family’ object used.
-#' @return linear.predictors: the linear fit on link scale.
-#' @return aic: A version of Akaike's _An Information Criterion_, which tells how 
+#' @return rank the numeric rank of the fitted linear model.
+#' @return family the ‘family’ object used.
+#' @return linear.predictors the linear fit on link scale.
+#' @return aic A version of Akaike's _An Information Criterion_, which tells how 
 #' well the model fits
 #' @author Burton, P.; Laflamme, P.
 #' @examples

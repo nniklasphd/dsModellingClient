@@ -26,13 +26,13 @@
   transforming the linear predictors by the inverse of the
   link function.
 
-  rank: the numeric rank of the fitted linear model.
+  rank the numeric rank of the fitted linear model.
 
-  family: the ‘family’ object used.
+  family the ‘family’ object used.
 
-  linear.predictors: the linear fit on link scale.
+  linear.predictors the linear fit on link scale.
 
-  aic: A version of Akaike's _An Information Criterion_,
+  aic A version of Akaike's _An Information Criterion_,
   which tells how well the model fits
 }
 \description{

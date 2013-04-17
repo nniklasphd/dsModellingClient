@@ -1,6 +1,6 @@
 \name{beta.vect.ds}
 \alias{beta.vect.ds}
-\title{Generates final estimates and standard errors of the fitted model}
+\title{Generates combined final estimates and standard errors of the fitted model}
 \usage{
   beta.vect.ds(score, infomatrix, J.matrix, start.betas)
 }
@@ -14,10 +14,10 @@
   \item{start.betas}{}
 }
 \value{
-  a list that contains beta estimates and standard errors
+  a list that contains the beta estimates and standard
+  errors
 }
 \description{
-  This function is required by the function
-  \code{datashield.gee}
+  Function required by the function \code{datashield.gee}
 }
 

@@ -11,7 +11,7 @@
   \item{opals}{character strings that represent the URL of
   the servers where the study datasets are stored}
 
-  \item{formula}{an object of class 'formula' which
+  \item{formula}{an object of class \code{formula} which
   describes the model to be fitted}
 
   \item{cluster}{a vector that holds the clusters
@@ -33,7 +33,7 @@
   estimates}
 
   \item{user.mats}{user-defined correlation matrices (one
-  per dataset) used if the paramter 'corstr' is set to
+  per dataset) used if the paramter \code{corstr} is set to
   'fixed'}
 
   \item{control}{a list of parameters for controlling the
@@ -65,21 +65,17 @@
 }
 \details{
   This function requires to log into the opal servers where
-  the data are stored (one dataset per study). The
-  dataSHIELD environment does not allow for the passing of
-  string literals as arguments, so the correlation
-  structures and the link function are specified as
-  integers which are internally turned into the required
-  characters. Set the parameter 'corstr' to set to 1, 2, 3
-  , 4 or 5 for respectively 'ar1', 'exchangeable',
-  'independence', 'fixed', or 'unstructured' correlation
-  structures. Set the parameter 'link' to 1, 2, 3, 4, or 5
-  for respectively the 'logit', 'identity', 'inverse',
-  'log' or 'probit' link functions. The 'binomial family'
+  the data are stored (one dataset per study). Set the
+  parameter \code{corstr} to set to 1, 2, 3 , 4 or 5 for
+  respectively 'ar1', 'exchangeable', 'independence',
+  'fixed', or 'unstructured' correlation structures. Set
+  the parameter \code{link} to 1, 2, 3, 4, or 5 for
+  respectively the 'logit', 'identity', 'inverse', 'log' or
+  'probit' link functions. The \code{binomial family}
   accepts the links 'logit', 'probit' and 'log'; the
-  'gaussian family' accepts the links 'identity', 'log' and
-  'inverse' and the 'Gamma family' acepts the links
-  'inverse', 'identity' and 'log'.
+  \code{gaussian family} accepts the links 'identity',
+  'log' and 'inverse' and the \code{Gamma family} acepts
+  the links 'inverse', 'identity' and 'log'.
 }
 \examples{
 \dontrun{

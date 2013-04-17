@@ -1,12 +1,12 @@
-#' This function is required by the function \code{datashield.gee}
+#' Function required by the function \code{datashield.gee}
 #'
-#' @title Generates final estimates and standard errors of the fitted model
+#' @title Generates combined final estimates and standard errors of the fitted model
 #'
 #' @param score
 #' @param infomatrix
 #' @param J.matrix
 #' @param start.betas
-#' @return a list that contains beta estimates and standard errors
+#' @return a list that contains the beta estimates and standard errors
 #'
 beta.vect.ds <- function(score, infomatrix, J.matrix, start.betas){
   if(is.null(start.betas)) {
