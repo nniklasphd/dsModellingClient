@@ -6,5 +6,8 @@ License: GPL-3
 Title: Datashield package for regression analyses (Client side)
 Description: This package contains functions to carry out statistical
     various type of regression analyses.
+Depends:
+    dsmodelling,
+    dsbase
 Collate:
     'datashield.glm.r'
