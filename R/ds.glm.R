@@ -1,37 +1,58 @@
-#' This function allows for the fitting of generalized linear models to correlated and non-pooled data. 
 #' 
 #' @title Runs a combined GLM analysis of non-pooled data
-#'
-#' @param opals character strings that represent the URL of the servers where 
-#' the study datasets are stored
-#' @param formula an object of class 'formula' which describes the model to be fitted
+#' @param opals a list of opal object(s) obtained after login in to opal servers;
+#' these objects hold also the data assign to R, as \code{dataframe}, from opal 
+#' datasources.
+#' @param formula an object of class \code{formula} which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
-#' @param maxit number of iterations of IWLS used
+#' @param maxit the number of iterations of IWLS used
 #' @details It enables a parallelized analysis of individual-level data sitting 
-#' on distinct computers/servers by sending 
+#' on distinct servers by sending 
 #' instructions to each computer requesting non-disclosing summary statistics.
 #' The sumaries are then combined to estimate the parameters of the model; these 
 #' parameters are the same as those obtained if the data were 'physically' pooled.
-#' @return coefficients: a named vector of coefficients
-#' @return residuals: the _working_ residuals, that is the residuals in the final
+#' @return coefficients a named vector of coefficients
+#' @return residuals the 'working' residuals, that is the residuals in the final
 #' iteration of the IWLS fit.
-#' @return fitted.values: the fitted mean values, obtained by transforming the
+#' @return fitted.values the fitted mean values, obtained by transforming the
 #' linear predictors by the inverse of the link function.
 #' @return rank the numeric rank of the fitted linear model.
-#' @return family the ‘family’ object used.
+#' @return family the \code{family} object used.
 #' @return linear.predictors the linear fit on link scale.
-#' @return aic A version of Akaike's _An Information Criterion_, which tells how 
+#' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
-#' @author Burton, P.; Laflamme, P.
-#' @examples
-#' \dontrun{
-#' # put example here
-#'}
+#' @author Burton, P.; Laflamme, P.; Gaye, A.
+#' @examples {
+#' # load the file that contains the login details
+#' data(logindata)
+#' 
+#' # login and assign some variables to R
+#' myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL")
+#' opals <- ds.login(logins=logindata,assign=TRUE,variables=myvar)
+#' 
+#' # run a GLM (e.g. diabetes prediction using BMI and HDL level)
+#'  mod <- ds.glm(opals=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL,family=quote(binomial))
+#' }
 #' @export
 #'
-datashield.glm <- function(opals, formula, family, maxit=10) {
-  numstudies<-length(opals)
+ds.glm <- function(opals, formula, family, maxit=10) {
   
+  # get the names of the variables from the formula and the name of the servers/studies
+  xx <- all.vars(formula)
+  variables <- xx[-1]
+  
+  # call the function that checks the variables are available and not empty
+  outvar <- terms(formula)[[2]]
+  explvars <- terms(formula)[[3]]
+  vars2check <- outvar
+  for(i in 2:length(variables)){
+    aa <- explvars[[i]]
+    vars2check <- append(vars2check, aa)
+  }
+  opals <- ds.checkvar(opals, vars2check)
+  
+  # number of 'valid' studies (those that passed the checks) and vector of beta values
+  numstudies<-length(opals)
   beta.vect.next<-NULL
   
   #Iterations need to be counted. Start off with the count at 0
@@ -58,18 +79,17 @@ datashield.glm <- function(opals, formula, family, maxit=10) {
     cat("--------------------------------------------\n")
     cat("Iteration", iteration.count, "\n")
     
-    call<-as.call(list(quote(glm.ds), formula, family, as.vector(beta.vect.next)));
+    cally <- as.call(list(quote(glm.ds), formula, family, as.vector(beta.vect.next)));
     
+    study.summary <- datashield.aggregate(opals, cally);
     
-    
-    
-    study.summary<-datashield.aggregate(opals, call);
+    .select <- function(l, field) {
+     lapply(l, function(obj) {obj[[field]]})
+    }
     
     info.matrix.total<-Reduce(f="+", .select(study.summary, 'info.matrix'))
     score.vect.total<-Reduce(f="+", .select(study.summary, 'score.vect'))
     dev.total<-Reduce(f="+", .select(study.summary, 'dev'))
-    
-    
     
     if(iteration.count==1) {
       # Sum participants only during first iteration.
@@ -81,13 +101,9 @@ datashield.glm <- function(opals, formula, family, maxit=10) {
     #Create variance covariance matrix as inverse of information matrix
     variance.covariance.matrix.total<-solve(info.matrix.total)
     
-    
-    
     #Create beta vector update terms
     beta.update.vect<-variance.covariance.matrix.total %*% score.vect.total
-    
-    
-    
+  
     #Add update terms to current beta vector to obtain new beta vector for next iteration
     if(is.null(beta.vect.next)) {
       beta.vect.next<-beta.update.vect
@@ -134,7 +150,6 @@ datashield.glm <- function(opals, formula, family, maxit=10) {
     }
     
     se.vect.final <- sqrt(diag(variance.covariance.matrix.total)) * sqrt(scale.par)
-    
     z.vect.final<-beta.vect.final/se.vect.final
     pval.vect.final<-2*pnorm(-abs(z.vect.final))
     parameter.names<-names(score.vect.total[,1])
