@@ -1,9 +1,9 @@
-# THIS SCRIPT IS MEANT TO TEST THE FUNCTIONS ON THE PACKAGE 'dsmodellingclient'
+# THIS SCRIPT IS MEANT TO TEST THE FUNCTIONS IN THE PACKAGE 'dsmodellingclient'
 
 # LOAD REQUIRED LIBRARIES AND FUNCTIONS AND LOGIN TO SERVERS 
 library('opal')
-server1 <- opal.login('administrator', 'password', 'http://54.242.140.255')
-server2 <- opal.login('administrator', 'password', 'http://54.242.46.59')
+server1 <- opal.login('******', '******', 'http://54.242.140.255')
+server2 <- opal.login('******', '******', 'http://54.242.46.59')
 opals <- list(server1,server2)
 
 # ASSIGN DATA FROM OPAL SOURCE TO R
