@@ -2,12 +2,12 @@
 \alias{ds.glm}
 \title{Runs a combined GLM analysis of non-pooled data}
 \usage{
-  ds.glm(opals, formula, family, maxit = 10)
+  ds.glm(datasources, formula, family, maxit = 10)
 }
 \arguments{
-  \item{opals}{a list of opal object(s) obtained after
-  login in to opal servers; these objects hold also the
-  data assign to R, as \code{dataframe}, from opal
+  \item{datasources}{a list of opal object(s) obtained
+  after login in to opal servers; these objects hold also
+  the data assign to R, as \code{dataframe}, from opal
   datasources.}
 
   \item{formula}{an object of class \code{formula} which
@@ -59,7 +59,7 @@ myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL")
 opals <- ds.login(logins=logindata,assign=TRUE,variables=myvar)
 
 # run a GLM (e.g. diabetes prediction using BMI and HDL level)
- mod <- ds.glm(opals=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL,family=quote(binomial))
+ mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL,family=quote(binomial))
 }
 }
 \author{

@@ -1,8 +1,7 @@
 #' 
 #' @title Runs a combined GLM analysis of non-pooled data
-#' @param opals a list of opal object(s) obtained after login in to opal servers;
-#' these objects hold also the data assign to R, as \code{dataframe}, from opal 
-#' datasources.
+#' @param datasources a list of opal object(s) obtained after login in to opal servers;
+#' these objects hold also the data assign to R, as \code{dataframe}, from opal datasources.
 #' @param formula an object of class \code{formula} which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
 #' @param maxit the number of iterations of IWLS used
@@ -22,6 +21,7 @@
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
 #' @author Burton, P.; Laflamme, P.; Gaye, A.
+#' @export
 #' @examples {
 #' # load the file that contains the login details
 #' data(logindata)
@@ -31,11 +31,10 @@
 #' opals <- ds.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
 #' # run a GLM (e.g. diabetes prediction using BMI and HDL level)
-#'  mod <- ds.glm(opals=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL,family=quote(binomial))
+#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL,family=quote(binomial))
 #' }
-#' @export
 #'
-ds.glm <- function(opals, formula, family, maxit=10) {
+ds.glm <- function(datasources, formula, family, maxit=10) {
   
   # get the names of the variables from the formula and the name of the servers/studies
   xx <- all.vars(formula)
@@ -49,10 +48,10 @@ ds.glm <- function(opals, formula, family, maxit=10) {
     aa <- explvars[[i]]
     vars2check <- append(vars2check, aa)
   }
-  opals <- ds.checkvar(opals, vars2check)
+  datasources <- ds.checkvar(datasources, vars2check)
   
   # number of 'valid' studies (those that passed the checks) and vector of beta values
-  numstudies<-length(opals)
+  numstudies<-length(datasources)
   beta.vect.next<-NULL
   
   #Iterations need to be counted. Start off with the count at 0
@@ -81,7 +80,7 @@ ds.glm <- function(opals, formula, family, maxit=10) {
     
     cally <- as.call(list(quote(glm.ds), formula, family, as.vector(beta.vect.next)));
     
-    study.summary <- datashield.aggregate(opals, cally);
+    study.summary <- datashield.aggregate(datasources, cally);
     
     .select <- function(l, field) {
      lapply(l, function(obj) {obj[[field]]})
