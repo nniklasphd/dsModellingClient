@@ -41,13 +41,20 @@ ds.glm <- function(datasources, formula, family, maxit=10) {
   variables <- xx[-1]
   
   # call the function that checks the variables are available and not empty
+  # the below lines up to the line where the checking is called are meant to
+  # get the extract the variables, as objects, from the formula
   outvar <- terms(formula)[[2]]
   explvars <- terms(formula)[[3]]
   vars2check <- outvar
-  for(i in 2:length(variables)){
-    aa <- explvars[[i]]
+  counter <- 1
+  tempholder <- explvars
+  while(counter < (length(variables)-1)){
+    aa <- explvars[[3]]
     vars2check <- append(vars2check, aa)
+    tempholder  <- tempholder [[2]]
+    counter <- counter + 1
   }
+  vars2check <- append(vars2check, tempholder)  
   datasources <- ds.checkvar(datasources, vars2check)
   
   # number of 'valid' studies (those that passed the checks) and vector of beta values
