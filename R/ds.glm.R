@@ -27,11 +27,17 @@
 #' data(logindata)
 #' 
 #' # login and assign some variables to R
-#' myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL")
+#' myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
 #' opals <- ds.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
-#' # run a GLM (e.g. diabetes prediction using BMI and HDL level)
-#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL,family=quote(binomial))
+#' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
+#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
+#'  
+#' # Example 2: run the above GLM with interaction HDL and GENDER
+#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family=quote(binomial))
+#'  
+#' # Example 3: now run the same GLM but with interaction between BMI and HDL 
+#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family=quote(binomial))
 #' }
 #'
 ds.glm <- function(datasources, formula, family, maxit=10) {
@@ -50,9 +56,18 @@ ds.glm <- function(datasources, formula, family, maxit=10) {
   tempholder <- explvars
   while(counter < (length(variables)-1)){
     aa <- explvars[[3]]
-    vars2check <- append(vars2check, aa)
+    # check if aa is not is not an interaction term and split the if so
+    if(aa[[1]] == "*"){
+      bb <- aa[[3]]
+      vars2check <- append(vars2check, bb)
+      cc <- aa[[2]]
+      vars2check <- append(vars2check, cc) 
+      counter <- counter + 2
+    }else{
+      vars2check <- append(vars2check, aa)
+      counter <- counter + 1
+    }
     tempholder  <- tempholder [[2]]
-    counter <- counter + 1
   }
   vars2check <- append(vars2check, tempholder)  
   datasources <- ds.checkvar(datasources, vars2check)
