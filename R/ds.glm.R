@@ -20,7 +20,7 @@
 #' @return linear.predictors the linear fit on link scale.
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
-#' @author Burton, P.; Laflamme, P.; Gaye, A.
+#' @author Burton, P.;  Gaye, A.; Laflamme, P.
 #' @export
 #' @examples {
 #' # load the file that contains the login details
@@ -33,43 +33,43 @@
 #' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
 #'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
 #'  
-#' # Example 2: run the above GLM with interaction HDL and GENDER
+#' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
+#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
+#'  
+#' # Example 3: run the above GLM with interaction HDL and GENDER
 #'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family=quote(binomial))
 #'  
-#' # Example 3: now run the same GLM but with interaction between BMI and HDL 
+#' # Example 4: now run the same GLM but with interaction between BMI and HDL 
 #'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family=quote(binomial))
 #' }
 #'
-ds.glm <- function(datasources, formula, family, maxit=10) {
+ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=10) {
   
-  # get the names of the variables from the formula and the name of the servers/studies
-  xx <- all.vars(formula)
-  variables <- xx[-1]
+  if(is.null(datasources)){
+    cat("\n\n ALERT!\n")
+    cat(" No valid opal object(s) provided.\n")
+    cat(" Make sure you are logged in to valid opal server(s).\n")
+    stop(" End of process!\n\n", call.=FALSE)
+  }
+  
+  if(is.null(formula)){
+    cat("\n\n ALERT!\n")
+    cat(" Please provide a valid regression formula\n")
+    stop(" End of process!\n\n", call.=FALSE)
+  }
+  
+  if(is.null(family)){
+    cat("\n\n ALERT!\n")
+    cat(" Please provide a valid 'family' argument\n")
+    stop(" End of process!\n\n", call.=FALSE)
+  }
+  
+  # call the helper function that extracts the outcome and covariates 
+  # from the regression formula as objects; these objects are required 
+  # by the function that carries out the preliminary checks
+  vars2check <-  dsmodellingclient:::glmhelper2(formula)
   
   # call the function that checks the variables are available and not empty
-  # the below lines up to the line where the checking is called are meant to
-  # get the extract the variables, as objects, from the formula
-  outvar <- terms(formula)[[2]]
-  explvars <- terms(formula)[[3]]
-  vars2check <- outvar
-  counter <- 1
-  tempholder <- explvars
-  while(counter < (length(variables)-1)){
-    aa <- explvars[[3]]
-    # check if aa is not is not an interaction term and split the if so
-    if(aa[[1]] == "*"){
-      bb <- aa[[3]]
-      vars2check <- append(vars2check, bb)
-      cc <- aa[[2]]
-      vars2check <- append(vars2check, cc) 
-      counter <- counter + 2
-    }else{
-      vars2check <- append(vars2check, aa)
-      counter <- counter + 1
-    }
-    tempholder  <- tempholder [[2]]
-  }
-  vars2check <- append(vars2check, tempholder)  
   datasources <- ds.checkvar(datasources, vars2check)
   
   # number of 'valid' studies (those that passed the checks) and vector of beta values

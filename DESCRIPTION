@@ -9,3 +9,5 @@ Depends:
     dsbaseclient
 Collate:
     'ds.glm.R'
+    'glmhelper1.R'
+    'glmhelper2.R'

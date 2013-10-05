@@ -2,7 +2,8 @@
 \alias{ds.glm}
 \title{Runs a combined GLM analysis of non-pooled data}
 \usage{
-  ds.glm(datasources, formula, family, maxit = 10)
+  ds.glm(datasources = NULL, formula = NULL, family = NULL,
+    maxit = 10)
 }
 \arguments{
   \item{datasources}{a list of opal object(s) obtained
@@ -56,19 +57,22 @@ data(logindata)
 
 # login and assign some variables to R
 myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
-opals <- ds.login(logins=logindata,assign=TRUE,variables=myvar)
+opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
 
-# Example 2: run the above GLM with interaction HDL and GENDER
+# Example 2: run the above GLM model with an intercept (eg. intercept = 1)
+ mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
+
+# Example 3: run the above GLM with interaction HDL and GENDER
  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family=quote(binomial))
 
-# Example 3: now run the same GLM but with interaction between BMI and HDL
+# Example 4: now run the same GLM but with interaction between BMI and HDL
  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family=quote(binomial))
 }
 }
 \author{
-  Burton, P.; Laflamme, P.; Gaye, A.
+  Burton, P.; Gaye, A.; Laflamme, P.
 }
 
