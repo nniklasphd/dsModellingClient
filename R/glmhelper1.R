@@ -10,15 +10,20 @@
 #' 
 glmhelper1 <- function(input){
   holder <- c()
-  while(length(input) == 3){
-    if(as.character(input)[[1]] == "$"){
-      covar <- input
-      holder <- append(holder, covar)
-      break 
-    }else{
-      covar <- input[[3]]
-      holder <- append(holder, covar)
-      input <- input[[2]] 
+  if(length(input) == 1 & class(input)=="name"){
+    holder <- input
+    return(holder)
+  }else{
+    while(length(input) == 3){
+      if(as.character(input)[[1]] == "$"){
+        covar <- input
+        holder <- append(holder, covar)
+        break 
+      }else{
+        covar <- input[[3]]
+        holder <- append(holder, covar)
+        input <- input[[2]] 
+      }
     }
   }
   return(holder)

@@ -19,8 +19,12 @@ glmhelper2 <- function(input){
       last.term <- all.terms[[3]]
     }
     output <- glmhelper1(last.term)
-    for(j in 1:length(output)){
-      tempholder <- append(tempholder, output[[j]])
+    if(class(output) == "name"){
+      tempholder <- append(tempholder, output)
+    }else{
+      for(j in 1:length(output)){
+        tempholder <- append(tempholder, output[[j]])
+      }
     }
     all.terms <- all.terms[[2]]
   }
@@ -28,9 +32,20 @@ glmhelper2 <- function(input){
   # it can potentially be the 'intercept' value
   # if that it is the case do not add it to
   # the list of variables to check
-  symbol <- as.character(all.terms)[[1]]
-  if(!(is.numeric(all.terms)) & !(as.character(all.terms)[[1]] == symbol)){
+  if(!(is.numeric(all.terms))){
     tempholder <- append(tempholder, all.terms)
   }
+  # if the last term is the just the name of the assigned table do not add it
+  if(as.character(all.terms)[[1]] == "$"){
+    symbol <- strsplit(deparse(all.terms), "\\$", perl=TRUE)[[1]][1]
+    if(!(as.character(all.terms)[[1]] == symbol)){
+      tempholder <- append(tempholder, all.terms)
+    }
+  }
+  # if the last term is the name of a variable created in the workspace, add it
+  if(class(output) == "name"){
+    tempholder <- append(tempholder, all.terms)
+  }
+
   return(tempholder)
 }
