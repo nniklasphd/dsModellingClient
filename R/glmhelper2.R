@@ -18,7 +18,7 @@ glmhelper2 <- function(input){
     }else{
       last.term <- all.terms[[3]]
     }
-    output <- glmhelper1(last.term)
+    output <- dsmodellingclient:::glmhelper1(last.term)
     if(class(output) == "name"){
       tempholder <- append(tempholder, output)
     }else{
@@ -43,9 +43,9 @@ glmhelper2 <- function(input){
     }
   }
   # if the last term is the name of a variable created in the workspace, add it
-  if(class(output) == "name"){
+  if(class(all.terms) == "name"){
     tempholder <- append(tempholder, all.terms)
   }
-
+  
   return(tempholder)
 }
