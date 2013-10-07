@@ -16,34 +16,37 @@ glmhelper2 <- function(input){
   }else{
     all.terms <- unlist(as.list(explvars))
   }
-  while(length(all.terms) > 1){
-    if(as.character(all.terms)[[1]] == "$"){
-      last.term <- all.terms
-    }else{
-      last.term <- all.terms[[3]]
+  if(length(explvars) == 1){
+    tempholder <- append(tempholder, explvars)
+  }else{
+    while(length(all.terms) > 1){
+      if(as.character(all.terms)[[1]] == "$"){
+        last.term <- all.terms
+      }else{
+        last.term <- all.terms[[3]]
+      }
+      output <- dsmodellingclient:::glmhelper1(last.term)
+      if(class(output) == "name"){
+        tempholder <- append(tempholder, output)
+      }else{
+        for(j in 1:length(output)){
+          tempholder <- append(tempholder, output[[j]])
+        }
+      }
+      ff <- all.terms
+      all.terms <- all.terms[[2]]
     }
-    output <- dsmodellingclient:::glmhelper1(last.term)
-    if(class(output) == "name"){
-      tempholder <- append(tempholder, output)
-    }else{
-      for(j in 1:length(output)){
-        tempholder <- append(tempholder, output[[j]])
+    # this is the last element in the formula
+    # it can potentially be the 'intercept' value
+    # if that it is the case do not add it to
+    # the list of variables to check
+    if(!(is.numeric(all.terms))){
+      if(class(all.terms) == "name"){
+        if(!(as.character(ff)[[1]] == "$")){
+          tempholder <- append(tempholder, all.terms)
+        }
       }
     }
-    ff <- all.terms
-    all.terms <- all.terms[[2]]
   }
-  # this is the last element in the formula
-  # it can potentially be the 'intercept' value
-  # if that it is the case do not add it to
-  # the list of variables to check
-  if(!(is.numeric(all.terms))){
-    if(class(all.terms) == "name"){
-      if(!(as.character(ff)[[1]] == "$")){
-        tempholder <- append(tempholder, all.terms)
-      }
-    }
-  }
-
   return(tempholder)
 }
