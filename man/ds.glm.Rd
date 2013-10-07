@@ -60,7 +60,7 @@ myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
- mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
+mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
 
 # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))

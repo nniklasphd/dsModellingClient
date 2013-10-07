@@ -11,7 +11,11 @@ glmhelper2 <- function(input){
   outvar <- terms(input)[[2]]
   explvars <- terms(input)[[3]]
   tempholder <- outvar
-  all.terms <- unlist(as.list(explvars))
+  if(as.character(explvars)[[1]] == "$"){
+    all.terms <- explvars
+  }else{
+    all.terms <- unlist(as.list(explvars))
+  }
   while(length(all.terms) > 1){
     if(as.character(all.terms)[[1]] == "$"){
       last.term <- all.terms
@@ -26,6 +30,7 @@ glmhelper2 <- function(input){
         tempholder <- append(tempholder, output[[j]])
       }
     }
+    ff <- all.terms
     all.terms <- all.terms[[2]]
   }
   # this is the last element in the formula
@@ -33,19 +38,12 @@ glmhelper2 <- function(input){
   # if that it is the case do not add it to
   # the list of variables to check
   if(!(is.numeric(all.terms))){
-    tempholder <- append(tempholder, all.terms)
-  }
-  # if the last term is the just the name of the assigned table do not add it
-  if(as.character(all.terms)[[1]] == "$"){
-    symbol <- strsplit(deparse(all.terms), "\\$", perl=TRUE)[[1]][1]
-    if(!(as.character(all.terms)[[1]] == symbol)){
-      tempholder <- append(tempholder, all.terms)
+    if(class(all.terms) == "name"){
+      if(!(as.character(ff)[[1]] == "$")){
+        tempholder <- append(tempholder, all.terms)
+      }
     }
   }
-  # if the last term is the name of a variable created in the workspace, add it
-  if(class(all.terms) == "name"){
-    tempholder <- append(tempholder, all.terms)
-  }
-  
+
   return(tempholder)
 }
