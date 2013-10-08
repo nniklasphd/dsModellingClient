@@ -1,14 +1,14 @@
 #' 
 #' @title Runs a combined GLM analysis of non-pooled data
-#' @param datasources a list of opal object(s) obtained after login in to opal servers;
-#' these objects hold also the data assign to R, as \code{dataframe}, from opal datasources.
+#' @param datasources a list of opal object(s) obtained after login to opal servers;
+#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
 #' @param formula an object of class \code{formula} which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
 #' @param maxit the number of iterations of IWLS used
 #' @details It enables a parallelized analysis of individual-level data sitting 
 #' on distinct servers by sending 
 #' instructions to each computer requesting non-disclosing summary statistics.
-#' The sumaries are then combined to estimate the parameters of the model; these 
+#' The summaries are then combined to estimate the parameters of the model; these
 #' parameters are the same as those obtained if the data were 'physically' pooled.
 #' @return coefficients a named vector of coefficients
 #' @return residuals the 'working' residuals, that is the residuals in the final
