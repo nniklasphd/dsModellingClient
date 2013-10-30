@@ -43,7 +43,7 @@
 #'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family=quote(binomial))
 #' }
 #'
-ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=10) {
+ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15) {
   
   if(is.null(datasources)){
     cat("\n\n ALERT!\n")
@@ -73,8 +73,8 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=10) {
   datasources <- ds.checkvar(datasources, vars2check)
   
   # number of 'valid' studies (those that passed the checks) and vector of beta values
-  numstudies<-length(datasources)
-  beta.vect.next<-NULL
+  numstudies <- length(datasources)
+  beta.vect.next <- NULL
   
   #Iterations need to be counted. Start off with the count at 0
   #and increment by 1 at each new iteration
@@ -99,8 +99,12 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=10) {
     
     cat("--------------------------------------------\n")
     cat("Iteration", iteration.count, "\n")
-    
-    cally <- as.call(list(quote(glm.ds), formula, family, as.vector(beta.vect.next)));
+    if(is.null(beta.vect.next)){
+       beta.vect.temp <- NULL
+     }else{
+       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
+     }
+    cally <- as.call(list(quote(glm.ds), formula, family, beta.vect.temp))
     
     study.summary <- datashield.aggregate(datasources, cally);
     
@@ -122,7 +126,7 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=10) {
     #Create variance covariance matrix as inverse of information matrix
     variance.covariance.matrix.total<-solve(info.matrix.total)
     
-    #Create beta vector update terms
+    # Create beta vector update terms
     beta.update.vect<-variance.covariance.matrix.total %*% score.vect.total
   
     #Add update terms to current beta vector to obtain new beta vector for next iteration

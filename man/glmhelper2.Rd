@@ -10,7 +10,7 @@
 }
 \value{
   a list which contains the individual objects of the
-  linear predictor but not the 'intercept' if there is any.
+  linear predictor but not the 'intercept' if there is one.
 }
 \description{
   Extracts object variables from a regression formula

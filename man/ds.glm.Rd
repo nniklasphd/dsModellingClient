@@ -3,12 +3,12 @@
 \title{Runs a combined GLM analysis of non-pooled data}
 \usage{
   ds.glm(datasources = NULL, formula = NULL, family = NULL,
-    maxit = 10)
+    maxit = 15)
 }
 \arguments{
   \item{datasources}{a list of opal object(s) obtained
-  after login in to opal servers; these objects hold also
-  the data assign to R, as \code{dataframe}, from opal
+  after login to opal servers; these objects also hold the
+  data assigned to R, as a \code{dataframe}, from opal
   datasources.}
 
   \item{formula}{an object of class \code{formula} which
@@ -45,7 +45,7 @@
   It enables a parallelized analysis of individual-level
   data sitting on distinct servers by sending instructions
   to each computer requesting non-disclosing summary
-  statistics. The sumaries are then combined to estimate
+  statistics. The summaries are then combined to estimate
   the parameters of the model; these parameters are the
   same as those obtained if the data were 'physically'
   pooled.
