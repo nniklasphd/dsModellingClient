@@ -52,6 +52,7 @@
 }
 \examples{
 {
+
 # load the file that contains the login details
 data(logindata)
 
@@ -71,8 +72,5 @@ mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL
 # Example 4: now run the same GLM but with interaction between BMI and HDL
  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family=quote(binomial))
 }
-}
-\author{
-  Burton, P.; Gaye, A.; Laflamme, P.
 }
 

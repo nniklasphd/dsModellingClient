@@ -20,9 +20,10 @@
 #' @return linear.predictors the linear fit on link scale.
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
-#' @author Burton, P.;  Gaye, A.; Laflamme, P.
+#' @authors Burton, P. (p.burton@bristol.ac.uk);  Gaye, A. (amadou.gaye@bristol.ac.uk); Laflamme, P.
 #' @export
 #' @examples {
+#' 
 #' # load the file that contains the login details
 #' data(logindata)
 #' 
