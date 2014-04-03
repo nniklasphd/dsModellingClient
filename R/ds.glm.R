@@ -107,7 +107,9 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15) {
      }
     cally <- as.call(list(quote(glm.ds), formula, family, beta.vect.temp))
     
-    study.summary <- datashield.aggregate(datasources, cally);
+    # call for parallel glm and retrieve results when available
+    rids <- datashield.aggregate(datasources, cally, async=TRUE)
+    study.summary <- datashield.command_result(datasources, rids, wait=TRUE)
     
     .select <- function(l, field) {
      lapply(l, function(obj) {obj[[field]]})

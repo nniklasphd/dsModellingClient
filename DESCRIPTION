@@ -6,7 +6,7 @@ License: GPL-3
 Title: Datashield package for statistical modelling (Client side)
 Description: This package contains functions for statistical modelling
 Depends:
-    opal,
+    opal (>= 2.1.0),
     dsbaseclient
 Collate:
     'ds.glm.R'
