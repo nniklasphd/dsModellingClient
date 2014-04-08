@@ -47,22 +47,22 @@
 ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15) {
   
   if(is.null(datasources)){
-    cat("\n\n ALERT!\n")
-    cat(" No valid opal object(s) provided.\n")
-    cat(" Make sure you are logged in to valid opal server(s).\n")
-    stop(" End of process!\n\n", call.=FALSE)
+    message(" ALERT!")
+    message(" No valid opal object(s) provided.")
+    message(" Make sure you are logged in to valid opal server(s).")
+    stop(" End of process!", call.=FALSE)
   }
   
   if(is.null(formula)){
-    cat("\n\n ALERT!\n")
-    cat(" Please provide a valid regression formula\n")
-    stop(" End of process!\n\n", call.=FALSE)
+    message(" ALERT!")
+    message(" Please provide a valid regression formula")
+    stop(" End of process!", call.=FALSE)
   }
   
   if(is.null(family)){
-    cat("\n\n ALERT!\n")
-    cat(" Please provide a valid 'family' argument\n")
-    stop(" End of process!\n\n", call.=FALSE)
+    message(" ALERT!")
+    message(" Please provide a valid 'family' argument")
+    stop(" End of process!", call.=FALSE)
   }
   
   # call the helper function that extracts the outcome and covariates 
@@ -98,8 +98,7 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15) {
     
     iteration.count<-iteration.count+1
     
-    cat("--------------------------------------------\n")
-    cat("Iteration", iteration.count, "\n")
+    message("------- Iteration ", iteration.count, " -------")
     if(is.null(beta.vect.next)){
        beta.vect.temp <- NULL
      }else{
@@ -108,8 +107,7 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15) {
     cally <- as.call(list(quote(glm.ds), formula, family, beta.vect.temp))
     
     # call for parallel glm and retrieve results when available
-    rids <- datashield.aggregate(datasources, cally, async=TRUE)
-    study.summary <- datashield.command_result(datasources, rids, wait=TRUE)
+    study.summary <- datashield.aggregate(datasources, cally)
     
     .select <- function(l, field) {
      lapply(l, function(obj) {obj[[field]]})
@@ -145,23 +143,19 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15) {
     if(converge.value>epsilon)dev.old<-dev.total
     
     #For ALL iterations summarise model state after current iteration
-    cat("\nSUMMARY OF MODEL STATE after iteration No",iteration.count,
-        "\n\nCurrent deviance",dev.total,"on",
-        (nsubs.total-length(beta.vect.next)), "degrees of freedom",
-        "\nConvergence criterion    ",converge.state," (", converge.value,")\n\n")
+    message("SUMMARY OF MODEL STATE after iteration ", iteration.count)
+    message("Current deviance ", dev.total," on ",(nsubs.total-length(beta.vect.next)), " degrees of freedom")
+    message("Convergence criterion ",converge.state," (", converge.value,")")
     
-    cat("beta\n")
-    print(as.vector(beta.vect.next))
+    message("\nbeta: ", paste(as.vector(beta.vect.next), collapse=" "))
     
-    cat("Information matrix overall\n")
-    print(info.matrix.total)
+    message("\nInformation matrix overall:")
+    message(paste(capture.output(info.matrix.total), collapse="\n"))
     
-    cat("Score vector overall\n")
-    print(score.vect.total)
+    message("\nScore vector overall:")
+    message(paste(capture.output(score.vect.total), collapse="\n"))
     
-    cat("Current Deviance\n")
-    print(dev.total)
-    cat("--------------------------------------------\n")    
+    message("\nCurrent deviance: ", dev.total, "\n")
   }
   
   #If convergence has been obtained, declare final (maximum likelihood) beta vector,
