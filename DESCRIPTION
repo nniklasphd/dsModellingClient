@@ -8,7 +8,3 @@ Description: This package contains functions for statistical modelling
 Depends:
     opal,
     dsbaseclient
-Collate:
-    'ds.glm.R'
-    'glmhelper1.R'
-    'glmhelper2.R'

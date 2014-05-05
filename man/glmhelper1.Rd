@@ -2,7 +2,7 @@
 \alias{glmhelper1}
 \title{Extracts the elements of an expression of type call}
 \usage{
-  glmhelper1(input)
+glmhelper1(input)
 }
 \arguments{
   \item{input}{a call of the form 'x1+x2+...' or
@@ -11,18 +11,18 @@
   intercept.}
 }
 \value{
-  a list which contains the individual elements of the
-  input expression
+a list which contains the individual elements of the input
+expression
 }
 \description{
-  Extracts the elements of an expression of type call
+
 }
 \details{
-  This is an internal function required by the client
-  function \code{ds.glm} to extract variables from a
-  regression formula
+This is an internal function required by the client
+function \code{ds.glm} to extract variables from a
+regression formula
 }
 \author{
-  Gaye, A.
+Gaye, A.
 }
 
