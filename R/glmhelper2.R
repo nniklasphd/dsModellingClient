@@ -7,7 +7,7 @@
 #' but not the 'intercept' if there is one.
 #' @author Gaye, A.
 #' 
-glmhelper2 <- function(input){
+.glmhelper2 <- function(input){
   outvar <- terms(input)[[2]]
   explvars <- terms(input)[[3]]
   tempholder <- outvar
@@ -25,7 +25,7 @@ glmhelper2 <- function(input){
       }else{
         last.term <- all.terms[[3]]
       }
-      output <- dsmodellingclient:::glmhelper1(last.term)
+      output <- dsmodellingclient:::.glmhelper1(last.term)
       if(class(output) == "name"){
         tempholder <- append(tempholder, output)
       }else{

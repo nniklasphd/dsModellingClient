@@ -8,7 +8,7 @@
 #' @return a list which contains the individual elements of the input expression
 #' @author Gaye, A.
 #' 
-glmhelper1 <- function(input){
+.glmhelper1 <- function(input){
   holder <- c()
   if(length(input) == 1 & class(input)=="name"){
     holder <- input

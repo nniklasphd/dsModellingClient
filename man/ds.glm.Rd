@@ -2,7 +2,8 @@
 \alias{ds.glm}
 \title{Runs a combined GLM analysis of non-pooled data}
 \usage{
-ds.glm(datasources = NULL, formula = NULL, family = NULL, maxit = 15)
+ds.glm(datasources = NULL, formula = NULL, family = NULL, maxit = 15,
+  CI = 0.95, viewIter = FALSE)
 }
 \arguments{
   \item{datasources}{a list of opal object(s) obtained
@@ -16,7 +17,19 @@ ds.glm(datasources = NULL, formula = NULL, family = NULL, maxit = 15)
   \item{family}{a description of the error distribution
   function to use in the model}
 
-  \item{maxit}{the number of iterations of IWLS used}
+  \item{maxit}{the number of iterations of IWLS used
+  instructions to each computer requesting non-disclosing
+  summary statistics. The summaries are then combined to
+  estimate the parameters of the model; these parameters
+  are the same as those obtained if the data were
+  'physically' pooled.}
+
+  \item{CI}{a numeric, the confidence interval.}
+
+  \item{viewIter}{a boolean, tells whether the results of
+  the intermediate iterations should be printed on screen
+  or not. Default is FALSE (i.e. only final results are
+  shown).}
 }
 \value{
 coefficients a named vector of coefficients
@@ -38,15 +51,13 @@ aic A version of Akaike's An Information Criterion, which
 tells how well the model fits
 }
 \description{
-
+A function fit generalized linear models
 }
 \details{
+
+
 It enables a parallelized analysis of individual-level data
-sitting on distinct servers by sending instructions to each
-computer requesting non-disclosing summary statistics. The
-summaries are then combined to estimate the parameters of
-the model; these parameters are the same as those obtained
-if the data were 'physically' pooled.
+sitting on distinct servers by sending
 }
 \examples{
 {
@@ -70,5 +81,8 @@ mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL
 # Example 4: now run the same GLM but with interaction between BMI and HDL
  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family=quote(binomial))
 }
+}
+\author{
+Burton,P;Gaye,A;Laflamme,P
 }
 
