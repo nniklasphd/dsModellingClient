@@ -1,4 +1,4 @@
-Package: dsmodellingclient
+Package: dsModellingClient
 Maintainer: <datashield@obiba.org>
 Author: <datashield@obiba.org>
 Version: 3.0.0
@@ -7,4 +7,4 @@ Title: DataSHIELD statistical modelling functions for client
 Description: DataSHIELD statistical modelling functions for client
 Depends:
     opal,
-    dsbaseclient
+    dsBaseClient
