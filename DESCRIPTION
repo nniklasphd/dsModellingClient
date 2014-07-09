@@ -3,8 +3,8 @@ Maintainer: <datashield@obiba.org>
 Author: <datashield@obiba.org>
 Version: 3.0.0
 License: GPL-3
-Title: DataSHIELD statistical modelling functions for client
-Description: DataSHIELD statistical modelling functions for client
+Title: DataSHIELD client site functions for statistical modelling
+Description: DataSHIELD client site functions for statistical modelling
 Depends:
     opal,
     dsBaseClient
