@@ -1,4 +1,4 @@
 dsModellingClient
 ==================
 
-Datashield package for regression analyses (Client)
+Datashield package for statistical modelling (Client)
