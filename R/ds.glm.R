@@ -1,10 +1,10 @@
 #' 
 #' @title Runs a combined GLM analysis of non-pooled data
-#' @description A function fit generalized linear models
+#' @description A function that fits generalized linear models
 #' @details It enables a parallelized analysis of individual-level data sitting 
-#' on distinct servers by sending 
-#' @param datasources a list of opal object(s) obtained after login to opal servers;
-#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
+#' on distinct servers by sending commands to each data computer to fit a regression 
+#' model. The estimates returned are then combined and updated coefficients estimate sent
+#' back for a new fit. This iterative process goes on until convergence is achieved. 
 #' @param formula an object of class \code{formula} which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
 #' @param maxit the number of iterations of IWLS used
@@ -14,6 +14,8 @@
 #' @param CI a numeric, the confidence interval.
 #' @param viewIter a boolean, tells whether the results of the intermediate iterations
 #' should be printed on screen or not. Default is FALSE (i.e. only final results are shown).
+#' @param datasources a list of opal object(s) obtained after login to opal servers;
+#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
 #' @return coefficients a named vector of coefficients
 #' @return residuals the 'working' residuals, that is the residuals in the final
 #' iteration of the IWLS fit.
@@ -32,50 +34,88 @@
 #' data(logindata)
 #' 
 #' # login and assign some variables to R
-#' myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
+#' myvar <- list('DIS_DIAB','PM_BMI_CONTINUOUS','LAB_HDL', 'GENDER')
 #' opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
 #' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-#' mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
+#' mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 #'  
 #' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
-#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family=quote(binomial))
+#'  mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 #'  
 #' # Example 3: run the above GLM with interaction HDL and GENDER
-#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family=quote(binomial))
+#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
 #'  
 #' # Example 4: now run the same GLM but with interaction between BMI and HDL 
-#'  mod <- ds.glm(datasources=opals,formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family=quote(binomial))
+#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family='binomial')
 #' }
-#'
-ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE) {
+#' 
+#' @references Jones EM, 'DataSHIELD-shared individual-level analysis without sharing the data: a biostatistical
+#' perspective', Norsk epidemiologi - Norwegian journal of epidemiology 2012;21(2): 231-9.
+#' 
+ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
+  # if no opal login details were provided look for 'opal' objects in the environment
   if(is.null(datasources)){
-    message(" ALERT!")
-    message(" No valid opal object(s) provided.")
-    message(" Make sure you are logged in to valid opal server(s).")
-    stop(" End of process!", call.=FALSE)
+    findLogin <- getOpals()
+    if(findLogin$flag == 1){
+      datasources <- findLogin$opals
+    }else{
+      if(findLogin$flag == 0){
+        stop(" Are yout logged in to any server? Please provide a valid opal login object! ", call.=FALSE)
+      }else{
+        message(paste0("More than one list of opal login object were found: '", paste(findLogin$opals,collapse="', '"), "'!"))
+        userInput <- readline("Please enter the name of the login object you want to use: ")
+        datasources <- eval(parse(text=userInput))
+        if(class(datasources[[1]]) != 'opal'){
+          stop("End of process: you failed to enter a valid login object", call.=FALSE)
+        }
+      }
+    }
   }
   
   if(is.null(formula)){
-    message(" ALERT!")
-    message(" Please provide a valid regression formula")
-    stop(" End of process!", call.=FALSE)
+    stop("Please provide a valid regression 'formula'!", call.=FALSE)
   }
   
   if(is.null(family)){
-    message(" ALERT!")
-    message(" Please provide a valid 'family' argument")
-    stop(" End of process!", call.=FALSE)
+    stop("Please provide a description of the error distribution ('family')!", call.=FALSE)
   }
   
-  # call the helper function that extracts the outcome and covariates 
-  # from the regression formula as objects; these objects are required 
+  # call the helper function that extracts the outcome and covariates
+  # from the regression formula as objects; these objects are required
   # by the function that carries out the preliminary checks
-  vars2check <-  dsmodellingclient:::.glmhelper2(formula)
-  
-  # call the function that checks the variables are available and not empty
-  datasources <- ds.checkvar(datasources, vars2check)
+  variables <- glmhelper2(formula)
+    
+  # checks
+  stdnames <- names(datasources)
+  for(i in 1:length(variables)){
+    if(as.character(variables[[1]])[1] =='$'){
+      name2check <- as.character(variables[[1]])[2]
+    }else{
+      name2check <- as.character(variables[[1]])
+    }
+    # check if the variable is defined in all the studies
+    cally <- paste0("exists('", name2check, "')")
+    defined <- unlist(datashield.aggregate(datasources, cally))
+    qq <- which(defined == FALSE)
+    if(length(qq) > 0){
+      stop("The object ", name2check, " is not defined in ", paste(stdnames[qq], collapse=', '), "!", call.=FALSE)
+    }
+    # check if the variable is of the same type in all the studies
+    cally <- paste0("class('", name2check, "')")
+    typ <- unique(unlist(datashield.aggregate(datasources, cally)))
+    if(length(typ) > 1){
+      stop("The object ", name2check, " is not of the same class in all the studies!", call.=FALSE)
+    }
+    # check if the variable is empty is any study
+    cally <- paste0("isNaDS('", name2check, "')")
+    isNA <- unlist(datashield.aggregate(datasources, cally))
+    mm <- which(isNA == TRUE)
+    if(length(mm) > 0){
+      stop("The object ", name2check, " is empty (all values are missing)", paste(stdnames[mm], collapse=', '), "!", call.=FALSE)
+    }
+  }
   
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
@@ -108,7 +148,7 @@ ds.glm <- function(datasources=NULL, formula=NULL, family=NULL, maxit=15, CI=0.9
     }else{
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
-    cally <- as.call(list(quote(glm.ds), formula, family, beta.vect.temp))
+    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp))
     
     # call for parallel glm and retrieve results when available
     study.summary <- datashield.aggregate(datasources, cally)

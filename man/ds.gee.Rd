@@ -1,0 +1,83 @@
+\name{ds.gee}
+\alias{ds.gee}
+\title{Runs a combined GEE analysis of non-pooled data}
+\usage{
+ds.gee(x = NULL, formula = NULL, family = NULL, corStructure = "ar1",
+  clusterID = NULL, startCoeff = NULL, userMatrix = NULL, maxit = 20,
+  display = FALSE, datasources = NULL)
+}
+\arguments{
+  \item{formula}{an object of class \code{formula} which
+  describes the linear predictor of the model to fit.}
+
+  \item{family}{a character, the description of the error
+  distribution: 'binomial', 'gaussian', 'Gamma' or
+  'poisson'.}
+
+  \item{corStructure}{a character, the correlation
+  structure: 'ar1', 'exchangeable', 'independence', 'fixed'
+  or 'unstructure'.}
+
+  \item{clusterID}{a character, the name of the column that
+  hold the cluster IDs}
+
+  \item{startCoeff}{a numeric vector, the starting values
+  for the beta coefficients.}
+
+  \item{userMatrix}{a list of user defined matrix (one for
+  each study). These matrices are required if the
+  correlation structure is set to 'fixed'.}
+
+  \item{maxit}{an integer, the maximum number of iteration
+  to use for convergence.}
+
+  \item{display}{a boolean to display or not the
+  intermediate results. Default is FALSE.}
+}
+\value{
+a list which contains the final coefficient estimates (beta
+values), the pooled alpha value and the pooled phi value.
+}
+\description{
+A function that fits generalized estimated equations to
+deal with correlation structures arising from repeated
+measures on individuals, or from clustering as in family
+data.
+}
+\details{
+
+
+It enables a parallelized analysis of individual-level data
+sitting on distinct servers by sending commands to each
+data computer to fit a GEE model model. The estimates
+returned are then combined and updated coefficients
+estimate sent back for a new fit. This iterative process
+goes on until convergence is achieved. The input data
+should not contain missing values. The data must be in a
+data.frame obejct and the variables must be refer to
+through the data.frame.
+}
+\examples{
+{
+
+  # load the login data file for the correlated data
+  data(geeLoginData)
+
+  # login and assign all the stored variables
+  opals <- datashield.login(logins=geeLoginData,assign=TRUE)
+
+  # set some parameters for the function 9the rest are set to default values)
+  myformula <- response~1+sex+age.60
+  myfamily <- 'binomial'
+  startbetas <- c(-1,1,0)
+  clusters <- 'id'
+  mycorr <- 'ar1'
+
+  # run a GEE analysis with the above specifed parameters
+  xx <- ds.gee(x='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
+}
+}
+\author{
+Gaye, A.; Jones EM.
+}
+

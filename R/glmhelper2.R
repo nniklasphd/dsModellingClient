@@ -1,13 +1,14 @@
 #'
 #' @title Extracts object variables from a regression formula
-#' @details This is an internal function required by the client
+#' @description This is an internal function required by the client
 #' function \code{ds.glm} to extract variables from a regression formula
 #' @param input a regression formula of the form 'y~x2+x2...' or 'y~x1*x2+x3...'
+#' @keywords internal
 #' @return a list which contains the individual objects of the linear predictor 
 #' but not the 'intercept' if there is one.
 #' @author Gaye, A.
 #' 
-.glmhelper2 <- function(input){
+glmhelper2 <- function(input){
   outvar <- terms(input)[[2]]
   explvars <- terms(input)[[3]]
   tempholder <- outvar
@@ -25,7 +26,7 @@
       }else{
         last.term <- all.terms[[3]]
       }
-      output <- dsmodellingclient:::.glmhelper1(last.term)
+      output <- glmhelper1(last.term)
       if(class(output) == "name"){
         tempholder <- append(tempholder, output)
       }else{

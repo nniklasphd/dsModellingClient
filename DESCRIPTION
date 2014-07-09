@@ -1,10 +1,10 @@
 Package: dsmodellingclient
 Maintainer: <datashield@obiba.org>
 Author: <datashield@obiba.org>
-Version: 2.2.2
+Version: 3.0.0
 License: GPL-3
-Title: Datashield package for statistical modelling (Client side)
-Description: This package contains functions for statistical modelling
+Title: DataSHIELD statistical modelling functions for client
+Description: DataSHIELD statistical modelling functions for client
 Depends:
     opal,
     dsbaseclient

@@ -1,1 +1,2 @@
+export(ds.gee)
 export(ds.glm)
