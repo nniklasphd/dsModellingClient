@@ -1,4 +1,4 @@
 dsModellingClient
 ==================
 
-Datashield package for statistical modelling (Client)
+Datashield client site functions for statistical modelling
