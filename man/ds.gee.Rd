@@ -1,6 +1,6 @@
 \name{ds.gee}
 \alias{ds.gee}
-\title{Runs a combined GEE analysis of non-pooled data}
+\title{Fits a Generalized Estimating Equation (GEE) model}
 \usage{
 ds.gee(x = NULL, formula = NULL, family = NULL, corStructure = "ar1",
   clusterID = NULL, startCoeff = NULL, userMatrix = NULL, maxit = 20,

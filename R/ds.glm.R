@@ -1,5 +1,5 @@
 #' 
-#' @title Runs a combined GLM analysis of non-pooled data
+#' @title Fits a Generalized Linear Model (GLM) model
 #' @description A function that fits generalized linear models
 #' @details It enables a parallelized analysis of individual-level data sitting 
 #' on distinct servers by sending commands to each data computer to fit a regression 

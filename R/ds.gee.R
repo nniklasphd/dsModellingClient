@@ -1,5 +1,5 @@
 #' 
-#' @title Runs a combined GEE analysis of non-pooled data
+#' @title Fits a Generalized Estimating Equation (GEE) model
 #' @description A function that fits generalized estimated equations to deal with correlation 
 #' structures arising from repeated measures on individuals, or from clustering as in family data. 
 #' @details It enables a parallelized analysis of individual-level data sitting on distinct servers 

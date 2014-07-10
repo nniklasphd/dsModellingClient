@@ -1,6 +1,6 @@
 \name{ds.glm}
 \alias{ds.glm}
-\title{Runs a combined GLM analysis of non-pooled data}
+\title{Fits a Generalized Linear Model (GLM) model}
 \usage{
 ds.glm(formula = NULL, family = NULL, maxit = 15, CI = 0.95,
   viewIter = FALSE, datasources = NULL)
