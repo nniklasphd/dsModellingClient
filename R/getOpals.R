@@ -12,7 +12,7 @@ getOpals <- function(){
   # get the names of all the objects in the current work environment
   objs <- ls(name=.GlobalEnv)
   
-  # check which of the object is a list (the opal objects are kept in a list)
+  # check which of the objects is a list (the opal objects are kept in a list)
   if(length(objs) > 0){
     opalist <- vector('list')
     cnt <- 0

@@ -4,26 +4,28 @@
 #' @details It enables a parallelized analysis of individual-level data sitting 
 #' on distinct servers by sending commands to each data computer to fit a regression 
 #' model. The estimates returned are then combined and updated coefficients estimate sent
-#' back for a new fit. This iterative process goes on until convergence is achieved. 
+#' back for a new fit. This iterative process goes on until convergence is achieved.
+#' @param x the name of the data frame that hold the variables in the regression formula
 #' @param formula an object of class \code{formula} which describes the model to be fitted
-#' @param family a description of the error distribution function to use in the model
+#' @param family a character, the description of the error distribution function to use in the model
+#' @param startCoeff a numeric vector, the starting values for the beta coefficients. 
 #' @param maxit the number of iterations of IWLS used
 #' instructions to each computer requesting non-disclosing summary statistics.
 #' The summaries are then combined to estimate the parameters of the model; these
-#' parameters are the same as those obtained if the data were 'physically' pooled.
+#' parameters are the same as those obtained if the data were 'physically' pooled
 #' @param CI a numeric, the confidence interval.
 #' @param viewIter a boolean, tells whether the results of the intermediate iterations
-#' should be printed on screen or not. Default is FALSE (i.e. only final results are shown).
+#' should be printed on screen or not. Default is FALSE (i.e. only final results are shown)
 #' @param datasources a list of opal object(s) obtained after login to opal servers;
-#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
+#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources
 #' @return coefficients a named vector of coefficients
 #' @return residuals the 'working' residuals, that is the residuals in the final
 #' iteration of the IWLS fit.
 #' @return fitted.values the fitted mean values, obtained by transforming the
-#' linear predictors by the inverse of the link function.
-#' @return rank the numeric rank of the fitted linear model.
-#' @return family the \code{family} object used.
-#' @return linear.predictors the linear fit on link scale.
+#' linear predictors by the inverse of the link function
+#' @return rank the numeric rank of the fitted linear model
+#' @return family the \code{family} object used
+#' @return linear.predictors the linear fit on link scale
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
 #' @author Burton,P;Gaye,A;Laflamme,P
@@ -53,7 +55,7 @@
 #' @references Jones EM, 'DataSHIELD-shared individual-level analysis without sharing the data: a biostatistical
 #' perspective', Norsk epidemiologi - Norwegian journal of epidemiology 2012;21(2): 231-9.
 #' 
-ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
+ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
   # if no opal login details were provided look for 'opal' objects in the environment
   if(is.null(datasources)){
@@ -74,52 +76,57 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     }
   }
   
-  if(is.null(formula)){
-    stop("Please provide a valid regression 'formula'!", call.=FALSE)
+  # check if user have provided the name of the dataset and if the dataset is defined
+  if(is.null(x)){
+    stop("x=NULL; please provide the name of the dataset that holds the variables!", call.=FALSE)
+  }else{
+    defined <- isDefined(datasources, x)
   }
   
-  if(is.null(family)){
-    stop("Please provide a description of the error distribution ('family')!", call.=FALSE)
+  # check if user have provided a formula
+  if(is.null(formula) | class(formula) != 'formula'){
+    stop("Please provide a valid formula!", call.=FALSE)
   }
   
-  # call the helper function that extracts the outcome and covariates
-  # from the regression formula as objects; these objects are required
-  # by the function that carries out the preliminary checks
-  variables <- glmhelper2(formula)
-    
-  # checks
+  # family 
+  families <- c("binomial", "gaussian", "Gamma", "poisson")
+  if(is.null(family) | !(family %in% families)){
+    stop("Please provide a valid 'family' parameter: 'binomial', 'gaussian', 'Gamma' or 'poisson'.", call.=FALSE)
+  }
+  
+  # if no start values have been provided by the user throw an alert and stop process.
+  # it is possible to set all betas to 0 here but sometimes that can cause the program
+  # to crash so it is safer to let the use choose sensible start values
+  l1 <- length(startCoeff)
+  l2 <- length(all.vars(formula))
+  if(is.null(startCoeff)) {
+    message("No starting values provided for the beta coefficients. The starting values will be set to 0 each.", call.=FALSE)
+    startCoeff <- rep(0, l2)
+  }else{
+    if(l1 != l2){
+      stop("The number starting beta values must be the same as the number of variables in the formula!", call.=FALSE)
+    }
+  }
+  
+  # check if any of the variables in the lp is empty
   stdnames <- names(datasources)
-  for(i in 1:length(variables)){
-    if(as.character(variables[[1]])[1] =='$'){
-      name2check <- as.character(variables[[1]])[2]
-    }else{
-      name2check <- as.character(variables[[1]])
-    }
-    # check if the variable is defined in all the studies
-    cally <- paste0("exists('", name2check, "')")
-    defined <- unlist(datashield.aggregate(datasources, cally))
-    qq <- which(defined == FALSE)
-    if(length(qq) > 0){
-      stop("The object ", name2check, " is not defined in ", paste(stdnames[qq], collapse=', '), "!", call.=FALSE)
-    }
-    # check if the variable is of the same type in all the studies
-    cally <- paste0("class('", name2check, "')")
-    typ <- unique(unlist(datashield.aggregate(datasources, cally)))
-    if(length(typ) > 1){
-      stop("The object ", name2check, " is not of the same class in all the studies!", call.=FALSE)
-    }
-    # check if the variable is empty is any study
-    cally <- paste0("isNaDS('", name2check, "')")
-    isNA <- unlist(datashield.aggregate(datasources, cally))
-    mm <- which(isNA == TRUE)
-    if(length(mm) > 0){
-      stop("The object ", name2check, " is empty (all values are missing)", paste(stdnames[mm], collapse=', '), "!", call.=FALSE)
+  variables <- all.vars(formula)
+  cally <- paste0('class(', x, ')')
+  clcheck <- unique(unlist(datashield.aggregate(datasources, as.symbol(cally))))
+  if(clcheck == 'data.frame'){ startloop <- 2 }else{ startloop <- 1}
+  for(i in startloop:length(variables)){
+    for(j in 1: length(datasources)){
+      cally <- paste0("isNaDS(", variables[i], ")")
+      out <- datashield.aggregate(datasources[j], as.symbol(cally))
+      if(out[[1]]){ 
+        stop("The variable ", variables[i], " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
+      }
     }
   }
-  
+    
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
-  beta.vect.next <- NULL
+  beta.vect.next <- startCoeff
   
   #Iterations need to be counted. Start off with the count at 0
   #and increment by 1 at each new iteration
@@ -140,15 +147,15 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
   
   while(!converge.state && iteration.count < maxit) {
     
-    iteration.count<-iteration.count+1
-    
     message("Iteration ", iteration.count, "...")
-    if(is.null(beta.vect.next)){
-      beta.vect.temp <- NULL
+    if(iteration.count == 0){
+      beta.vect.temp <- paste0(startCoeff, collapse=",")
     }else{
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
-    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp))
+    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, dtframe=x))
+    
+    iteration.count<-iteration.count+1
     
     # call for parallel glm and retrieve results when available
     study.summary <- datashield.aggregate(datasources, cally)
@@ -174,8 +181,8 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     # Create beta vector update terms
     beta.update.vect<-variance.covariance.matrix.total %*% score.vect.total
     
-    #Add update terms to current beta vector to obtain new beta vector for next iteration
-    if(is.null(beta.vect.next)) {
+    # add update terms to current beta vector to obtain new beta vector for next iteration
+    if(mean(beta.vect.next==startCoeff) == 1) {
       beta.vect.next<-beta.update.vect
     } else {
       beta.vect.next<-beta.vect.next+beta.update.vect
@@ -258,8 +265,8 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
         estimate.natural<-estimate.lp
         low.ci.natural<-low.ci.lp
         hi.ci.natural<-hi.ci.lp
-        name1<-paste("lo",CI,"CI")
-        name2<-paste("hi",CI,"CI")
+        name1<-paste0("low",CI,"CI")
+        name2<-paste0("high",CI,"CI")
         ci.mat<-cbind(low.ci.lp,hi.ci.lp)
         dimnames(ci.mat)<-list(NULL,c(name1,name2))   
       }
@@ -276,11 +283,11 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
           estimate.natural[2:num.parms]<-exp(estimate.lp[2:num.parms])
           low.ci.natural[2:num.parms]<-exp(low.ci.lp[2:num.parms])
           hi.ci.natural[2:num.parms]<-exp(hi.ci.lp[2:num.parms])
-          name1<-paste("lo",CI,"CI  LP")
-          name2<-paste("hi",CI,"CI  LP")
-          name3<-paste("P or OR")
-          name4<-paste("lo",CI,"CI  P_OR")
-          name5<-paste("hi",CI,"CI  P_OR")
+          name1<-paste0("low",CI,"CI  LP")
+          name2<-paste0("high",CI,"CI  LP")
+          name3<-paste0("P or OR")
+          name4<-paste0("low",CI,"CI  P_OR")
+          name5<-paste0("high",CI,"CI  P_OR")
         }       
         ci.mat<-cbind(low.ci.lp,hi.ci.lp,estimate.natural,low.ci.natural,hi.ci.natural)
         dimnames(ci.mat)<-list(NULL,c(name1,name2,name3,name4,name5))
@@ -293,11 +300,11 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
         estimate.natural[2:num.parms]<-exp(estimate.lp[2:num.parms])
         low.ci.natural[2:num.parms]<-exp(low.ci.lp[2:num.parms])
         hi.ci.natural[2:num.parms]<-exp(hi.ci.lp[2:num.parms])
-        name1<-paste("lo",CI,"CI  LP")
-        name2<-paste("hi",CI,"CI  LP")
-        name3<-paste("EXPONENTIATED RR")
-        name4<-paste("lo",CI,"CI  EXP")
-        name5<-paste("hi",CI,"CI  EXP")
+        name1<-paste0("low",CI,"CI  LP")
+        name2<-paste0("high",CI,"CI  LP")
+        name3<-paste0("EXPONENTIATED RR")
+        name4<-paste0("low",CI,"CI  EXP")
+        name5<-paste0("high",CI,"CI  EXP")
         ci.mat<-cbind(low.ci.lp,hi.ci.lp,estimate.natural,low.ci.natural,hi.ci.natural)
         dimnames(ci.mat)<-list(NULL,c(name1,name2,name3,name4,name5))        
       }
@@ -307,8 +314,8 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
         estimate.natural<-estimate.lp
         low.ci.natural<-low.ci.lp
         hi.ci.natural<-hi.ci.lp
-        name1<-paste("lo",CI,"CI")
-        name2<-paste("hi",CI,"CI")
+        name1<-paste0("low",CI,"CI")
+        name2<-paste0("high",CI,"CI")
         ci.mat<-cbind(low.ci.lp,hi.ci.lp)
         dimnames(ci.mat)<-list(NULL,c(name1,name2))   
       }

@@ -2,34 +2,40 @@
 \alias{ds.glm}
 \title{Fits a Generalized Linear Model (GLM) model}
 \usage{
-ds.glm(formula = NULL, family = NULL, maxit = 15, CI = 0.95,
-  viewIter = FALSE, datasources = NULL)
+ds.glm(x = NULL, formula = NULL, family = NULL, startCoeff = NULL,
+  maxit = 15, CI = 0.95, viewIter = FALSE, datasources = NULL)
 }
 \arguments{
+  \item{x}{the name of the data frame that hold the
+  variables in the regression formula}
+
   \item{formula}{an object of class \code{formula} which
   describes the model to be fitted}
 
-  \item{family}{a description of the error distribution
-  function to use in the model}
+  \item{family}{a character, the description of the error
+  distribution function to use in the model}
+
+  \item{startCoeff}{a numeric vector, the starting values
+  for the beta coefficients.}
 
   \item{maxit}{the number of iterations of IWLS used
   instructions to each computer requesting non-disclosing
   summary statistics. The summaries are then combined to
   estimate the parameters of the model; these parameters
   are the same as those obtained if the data were
-  'physically' pooled.}
+  'physically' pooled}
 
   \item{CI}{a numeric, the confidence interval.}
 
   \item{viewIter}{a boolean, tells whether the results of
   the intermediate iterations should be printed on screen
   or not. Default is FALSE (i.e. only final results are
-  shown).}
+  shown)}
 
   \item{datasources}{a list of opal object(s) obtained
   after login to opal servers; these objects also hold the
   data assigned to R, as a \code{dataframe}, from opal
-  datasources.}
+  datasources}
 }
 \value{
 coefficients a named vector of coefficients
@@ -39,13 +45,13 @@ the final iteration of the IWLS fit.
 
 fitted.values the fitted mean values, obtained by
 transforming the linear predictors by the inverse of the
-link function.
+link function
 
-rank the numeric rank of the fitted linear model.
+rank the numeric rank of the fitted linear model
 
-family the \code{family} object used.
+family the \code{family} object used
 
-linear.predictors the linear fit on link scale.
+linear.predictors the linear fit on link scale
 
 aic A version of Akaike's An Information Criterion, which
 tells how well the model fits

@@ -8,7 +8,7 @@ ds.gee(x = NULL, formula = NULL, family = NULL, corStructure = "ar1",
 }
 \arguments{
   \item{x}{the name of the data frame that hold the
-  variables in the regression formula..}
+  variables in the regression formula.}
 
   \item{formula}{an object of class \code{formula} which
   describes the linear predictor of the model to fit.}

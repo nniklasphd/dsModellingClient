@@ -7,7 +7,7 @@
 #' then combined and updated coefficients estimate sent back for a new fit. This iterative process 
 #' goes on until convergence is achieved. The input data should not contain missing values.
 #' The data must be in a data.frame obejct and the variables must be refer to through the data.frame.
-#' @param x the name of the data frame that hold the variables in the regression formula..
+#' @param x the name of the data frame that hold the variables in the regression formula.
 #' @param formula an object of class \code{formula} which describes the linear predictor of the model to fit.
 #' @param family a character, the description of the error distribution:  'binomial', 'gaussian', 
 #' 'Gamma' or 'poisson'.
@@ -68,7 +68,7 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
   
   # check if user have provided the name of the dataset and if the dataset is defined
   if(is.null(x)){
-    stop("x=NULL; please provide the name of the datset that holds the variables!", call.=FALSE)
+    stop("x=NULL; please provide the name of the dataset that holds the variables!", call.=FALSE)
   }else{
     defined <- isDefined(datasources, x)
   }
@@ -86,11 +86,12 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
   # if no start values have been provided by the user throw an alert and stop process.
   # it is possible to set all betas to 0 here but sometimes that can cause the program
   # to crash so it is safer to let the use choose sensible start values
+  l1 <- length(startCoeff)
+  l2 <- length(all.vars(formula))
   if(is.null(startCoeff)) {
-    stop("Please provide starting values for the beta coefficients!", call.=FALSE)
+    message("No starting values provided for the beta coefficients. The starting values will be set to 0 each.", call.=FALSE)
+    startCoeff <- rep(0, l2)
   }else{
-    l1 <- length(startCoeff)
-    l2 <- length(all.vars(formula))
     if(l1 != l2){
       stop("The number starting beta values must be the same as the number of variables in the formula!", call.=FALSE)
     }
@@ -113,6 +114,22 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
   families <- c("binomial", "gaussian", "Gamma", "poisson")
   if(is.null(family) | !(family %in% families)){
     stop("Please provide a valid 'family' parameter: 'binomial', 'gaussian', 'Gamma' or 'poisson'.", call.=FALSE)
+  }
+  
+  # check if any of the variables in the lp is empty
+  stdnames <- names(datasources)
+  variables <- all.vars(formula)
+  cally <- paste0('class(', x, ')')
+  clcheck <- unique(unlist(datashield.aggregate(datasources, as.symbol(cally))))
+  if(clcheck == 'data.frame'){ startloop <- 2 }else{ startloop <- 1}
+  for(i in startloop:length(variables)){
+    for(j in 1: length(datasources)){
+      cally <- paste0("isNaDS(", variables[i], ")")
+      out <- datashield.aggregate(datasources[j], as.symbol(cally))
+      if(out[[1]]){ 
+        stop("The variable ", variables[i], " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
+      }
+    }
   }
   
   # loop until convergence is achieved or the maximum number of iterations reached  
