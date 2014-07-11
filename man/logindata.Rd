@@ -4,7 +4,7 @@
 
 \docType{data}
 
-\title{Information required to login to opal servers}
+\title{Information required to login to opal servers for the GLM test data}
 
 \description{
     A table of with 5 columns: study name, URL, username, password and opal datasource.

@@ -7,6 +7,7 @@
 #' then combined and updated coefficients estimate sent back for a new fit. This iterative process 
 #' goes on until convergence is achieved. The input data should not contain missing values.
 #' The data must be in a data.frame obejct and the variables must be refer to through the data.frame.
+#' @param x the name of the data frame that hold the variables in the regression formula..
 #' @param formula an object of class \code{formula} which describes the linear predictor of the model to fit.
 #' @param family a character, the description of the error distribution:  'binomial', 'gaussian', 
 #' 'Gamma' or 'poisson'.
@@ -18,6 +19,8 @@
 #' required if the correlation structure is set to 'fixed'.
 #' @param maxit an integer, the maximum number of iteration to use for convergence.
 #' @param display a boolean to display or not the intermediate results. Default is FALSE.
+#' @param datasources a list of opal object(s) obtained after login to opal servers;
+#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
 #' @return a list which contains the final coefficient estimates (beta values), the pooled alpha
 #' value and the pooled phi value.
 #' @author Gaye, A.; Jones EM.

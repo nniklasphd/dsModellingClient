@@ -7,6 +7,9 @@ ds.gee(x = NULL, formula = NULL, family = NULL, corStructure = "ar1",
   display = FALSE, datasources = NULL)
 }
 \arguments{
+  \item{x}{the name of the data frame that hold the
+  variables in the regression formula..}
+
   \item{formula}{an object of class \code{formula} which
   describes the linear predictor of the model to fit.}
 
@@ -33,6 +36,11 @@ ds.gee(x = NULL, formula = NULL, family = NULL, corStructure = "ar1",
 
   \item{display}{a boolean to display or not the
   intermediate results. Default is FALSE.}
+
+  \item{datasources}{a list of opal object(s) obtained
+  after login to opal servers; these objects also hold the
+  data assigned to R, as a \code{dataframe}, from opal
+  datasources.}
 }
 \value{
 a list which contains the final coefficient estimates (beta
