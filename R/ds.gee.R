@@ -42,6 +42,10 @@
 #'   
 #'   # run a GEE analysis with the above specifed parameters
 #'   xx <- ds.gee(x='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
+#'   
+#' # clear the Datashield R sessions and logout
+#' datashield.logout(opals) 
+#' 
 #' }
 #' 
 ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', clusterID=NULL, startCoeff=NULL, userMatrix=NULL, 
@@ -116,18 +120,34 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
     stop("Please provide a valid 'family' parameter: 'binomial', 'gaussian', 'Gamma' or 'poisson'.", call.=FALSE)
   }
   
-  # check if any of the variables in the lp is empty
+  # check if the input dataframe is complete and if the variables in the lp formula are in the input dataframe
+  cally <- call('complete.cases', as.symbol(x))
+  datashield.assign(datasources, 'Dcomplete', cally)
+  
   stdnames <- names(datasources)
-  variables <- all.vars(formula)
-  cally <- paste0('class(', x, ')')
-  clcheck <- unique(unlist(datashield.aggregate(datasources, as.symbol(cally))))
-  if(clcheck == 'data.frame'){ startloop <- 2 }else{ startloop <- 1}
-  for(i in startloop:length(variables)){
+  temp <- glmhelper2(formula)
+  variables <- c()
+  for(i in 1:length(temp)){
+    variables <- append(variables, temp[[i]])
+  }
+  colsD <- datashield.aggregate(datasources, paste0("colnames(", x, ")"))[[1]]
+  for(i in 1:length(variables)){
     for(j in 1: length(datasources)){
-      cally <- paste0("isNaDS(", variables[i], ")")
-      out <- datashield.aggregate(datasources[j], as.symbol(cally))
-      if(out[[1]]){ 
-        stop("The variable ", variables[i], " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
+      lengthDcomplete <- datashield.aggregate(datasources[j],paste0("length(Dcomplete)"))[[1]]
+      nrowD <- datashield.aggregate(datasources[j], paste0("dim(", x, ")"))[[1]][1]
+      if(lengthDcomplete != nrowD){
+        stop("The input dataset ", x,  " in ", stdnames[j] , " contains one or more missing values. Only complete datasets are allowed in GEE analysis.", call.=FALSE)
+      }else{
+        inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
+        if(length(inputterms) > 1){
+          if(!(inputerms[2] %in% colsD)){
+            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", x, " in ", stdnames[j], call.=FALSE)
+          }
+        }else{
+          if(!(as.character(variables[[i]]) %in% colsD)){
+            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", x, " in ", stdnames[j], call.=FALSE)
+          }
+        }
       }
     }
   }

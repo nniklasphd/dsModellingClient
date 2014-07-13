@@ -49,5 +49,9 @@ glmhelper2 <- function(input){
       }
     }
   }
+  qq <- as.character(ff[[3]])
+  if(qq[1] == '*' ){
+    tempholder <- append(tempholder, qq[2])
+  }
   return(tempholder)
 }

@@ -6,7 +6,7 @@ ds.glm(x = NULL, formula = NULL, family = NULL, startCoeff = NULL,
   maxit = 15, CI = 0.95, viewIter = FALSE, datasources = NULL)
 }
 \arguments{
-  \item{x}{the name of the data frame that hold the
+  \item{x}{the name if any of the data frame that hold the
   variables in the regression formula}
 
   \item{formula}{an object of class \code{formula} which
@@ -16,7 +16,9 @@ ds.glm(x = NULL, formula = NULL, family = NULL, startCoeff = NULL,
   distribution function to use in the model}
 
   \item{startCoeff}{a numeric vector, the starting values
-  for the beta coefficients.}
+  for the beta coefficients. If starting values are not
+  provided they are set to 0 for each beta at the start of
+  the iterations.}
 
   \item{maxit}{the number of iterations of IWLS used
   instructions to each computer requesting non-disclosing
@@ -76,11 +78,11 @@ goes on until convergence is achieved.
 data(logindata)
 
 # login and assign some variables to R
-myvar <- list('DIS_DIAB','PM_BMI_CONTINUOUS','LAB_HDL', 'GENDER')
+myvar <- list('DIS_DIAB', 'PM_BMI_CONTINUOUS', 'LAB_HDL', 'PM_BMI_CATEGORICAL', 'GENDER')
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 
 # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
  mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
@@ -88,8 +90,12 @@ mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='
 # Example 3: run the above GLM with interaction HDL and GENDER
  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
 
-# Example 4: now run the same GLM but with interaction between BMI and HDL
- mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family='binomial')
+# Example 4: now run a GLM but with interaction where the error follows a poisson distribution
+ mod <- ds.glm(formula=D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='poisson')
+
+# clear the Datashield R sessions and logout
+datashield.logout(opals)
+
 }
 }
 \author{

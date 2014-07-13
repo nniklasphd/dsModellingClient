@@ -83,6 +83,10 @@ through the data.frame.
 
   # run a GEE analysis with the above specifed parameters
   xx <- ds.gee(x='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
+
+# clear the Datashield R sessions and logout
+datashield.logout(opals)
+
 }
 }
 \author{

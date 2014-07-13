@@ -5,10 +5,11 @@
 #' on distinct servers by sending commands to each data computer to fit a regression 
 #' model. The estimates returned are then combined and updated coefficients estimate sent
 #' back for a new fit. This iterative process goes on until convergence is achieved.
-#' @param x the name of the data frame that hold the variables in the regression formula
+#' @param x the name if any of the data frame that hold the variables in the regression formula
 #' @param formula an object of class \code{formula} which describes the model to be fitted
 #' @param family a character, the description of the error distribution function to use in the model
-#' @param startCoeff a numeric vector, the starting values for the beta coefficients. 
+#' @param startCoeff a numeric vector, the starting values for the beta coefficients. If starting
+#' values are not provided they are set to 0 for each beta at the start of the iterations.
 #' @param maxit the number of iterations of IWLS used
 #' instructions to each computer requesting non-disclosing summary statistics.
 #' The summaries are then combined to estimate the parameters of the model; these
@@ -36,11 +37,11 @@
 #' data(logindata)
 #' 
 #' # login and assign some variables to R
-#' myvar <- list('DIS_DIAB','PM_BMI_CONTINUOUS','LAB_HDL', 'GENDER')
+#' myvar <- list('DIS_DIAB', 'PM_BMI_CONTINUOUS', 'LAB_HDL', 'PM_BMI_CATEGORICAL', 'GENDER')
 #' opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
 #' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-#' mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+#' mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 #'  
 #' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
 #'  mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
@@ -48,8 +49,12 @@
 #' # Example 3: run the above GLM with interaction HDL and GENDER
 #'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
 #'  
-#' # Example 4: now run the same GLM but with interaction between BMI and HDL 
-#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family='binomial')
+#' # Example 4: now run a GLM but with interaction where the error follows a poisson distribution
+#'  mod <- ds.glm(formula=D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='poisson')
+#'  
+#' # clear the Datashield R sessions and logout
+#' datashield.logout(opals) 
+#'  
 #' }
 #' 
 #' @references Jones EM, 'DataSHIELD-shared individual-level analysis without sharing the data: a biostatistical
@@ -76,13 +81,6 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     }
   }
   
-  # check if user have provided the name of the dataset and if the dataset is defined
-  if(is.null(x)){
-    stop("x=NULL; please provide the name of the dataset that holds the variables!", call.=FALSE)
-  }else{
-    defined <- isDefined(datasources, x)
-  }
-  
   # check if user have provided a formula
   if(is.null(formula) | class(formula) != 'formula'){
     stop("Please provide a valid formula!", call.=FALSE)
@@ -94,34 +92,71 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     stop("Please provide a valid 'family' parameter: 'binomial', 'gaussian', 'Gamma' or 'poisson'.", call.=FALSE)
   }
   
-  # if no start values have been provided by the user throw an alert and stop process.
-  # it is possible to set all betas to 0 here but sometimes that can cause the program
-  # to crash so it is safer to let the use choose sensible start values
-  l1 <- length(startCoeff)
-  l2 <- length(all.vars(formula))
-  if(is.null(startCoeff)) {
-    message("No starting values provided for the beta coefficients. The starting values will be set to 0 each.", call.=FALSE)
-    startCoeff <- rep(0, l2)
-  }else{
+  # if the user provides starting values check that vector is of the same length than the variables in the formula
+  if(!(is.null(startCoeff))){
+    l1 <- length(startCoeff)
+    l2 <- length(all.vars(formula))
     if(l1 != l2){
       stop("The number starting beta values must be the same as the number of variables in the formula!", call.=FALSE)
     }
   }
   
-  # check if any of the variables in the lp is empty
+  # check if all the variables in the lp formula are exist on the server site and if any is empty
   stdnames <- names(datasources)
-  variables <- all.vars(formula)
-  cally <- paste0('class(', x, ')')
-  clcheck <- unique(unlist(datashield.aggregate(datasources, as.symbol(cally))))
-  if(clcheck == 'data.frame'){ startloop <- 2 }else{ startloop <- 1}
-  for(i in startloop:length(variables)){
+  temp <- glmhelper2(formula)
+  variables <- c()
+  for(i in 1:length(temp)){
+    variables <- append(variables, temp[[i]])
+  }
+  for(i in 1:length(variables)){
     for(j in 1: length(datasources)){
-      cally <- paste0("isNaDS(", variables[i], ")")
-      out <- datashield.aggregate(datasources[j], as.symbol(cally))
-      if(out[[1]]){ 
-        stop("The variable ", variables[i], " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
+      inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
+      if(length(inputterms) < 2){
+        cally1 <- call('exists', as.character(variables[[i]]))
+        d1 <- datashield.aggregate(datasources[j], cally1)[[1]]
+        if(!d1){
+          stop("The variable ", as.character(variables[[i]]),  " is not defined in ", stdnames[j], ".", call.=FALSE)
+        }else{
+          cally2 <- call('isNaDS', variables[[i]])
+          d2 <- datashield.aggregate(datasources[j], cally2)[[1]]
+          if(d2){ 
+            stop("The variable ", as.character(variables[[i]]), " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
+          }
+        }
+        # turn the vector into numeric
+        datashield.assign(datasources[j], as.character(variables[[i]]), quote(as.numeric(as.character(variables[[i]]))))
+      }else{
+        if(is.null(x)){
+          stop("x=NULL! You must set the argument 'x' to ", inputterms[1], " because the variable ", inputterms[2], " is indicated as attached ", inputterms[1], " in ", as.character(variables[[i]]), "!", call.=FALSE)
+        }
+        cally2 <- call('isNaDS', variables[[i]])
+        d2 <- datashield.aggregate(datasources[j], cally2)[[1]]
+        if(d2){ 
+          stop("The variable ", as.character(variables[[i]]), " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
+        }
+        # turn the vector into numeric
+        cally <- paste0("as.numeric(as.character(", variables[[i]], ")")
+        datashield.assign(datasources[j], inputterms[2], as.symbol(cally))
       }
     }
+  }
+  
+  # the variables have been turned into numeric to avoid issues with factors if for example
+  # a poisson distribution is used for the fitted model. The numeric variables were saved 
+  # with the same names; now we re-construct the linear predictor formula using the saved 
+  # loose variables (i.e. without the 'dataFrameName$' bit if that was how the formula was given)
+  formulaChr <- as.character(formula)
+  # a formula has always 3 parts: '~', the outcome and the covariates part
+  if(is.null(x)){
+    formula <- formula
+  }else{
+    bits <- c()
+    for(i in 2:3){
+      bitTemp <- gsub("([$])", '', formulaChr[i])
+      bit<- gsub(x, '', bitTemp)
+      bits <- append(bits, bit)
+    }
+    formula <- as.formula(paste0(bits[1], "~", bits[2]))
   }
     
   # number of 'valid' studies (those that passed the checks) and vector of beta values
@@ -149,13 +184,19 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     
     message("Iteration ", iteration.count, "...")
     if(iteration.count == 0){
-      beta.vect.temp <- paste0(startCoeff, collapse=",")
+      if(is.null(beta.vect.next)){
+        beta.vect.temp <- NULL
+      }else{
+        beta.vect.temp <- paste0(startCoeff, collapse=",")
+      }
     }else{
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
-    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, dtframe=x))
-    
-    iteration.count<-iteration.count+1
+    if(is.null(x)){
+      cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, dtframe=NULL))
+    }else{
+      cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, dtframe=as.symbol(x)))
+    }
     
     # call for parallel glm and retrieve results when available
     study.summary <- datashield.aggregate(datasources, cally)
@@ -181,12 +222,13 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     # Create beta vector update terms
     beta.update.vect<-variance.covariance.matrix.total %*% score.vect.total
     
-    # add update terms to current beta vector to obtain new beta vector for next iteration
-    if(mean(beta.vect.next==startCoeff) == 1) {
+    # update terms to current beta vector to obtain new beta vector for next iteration
+    if(iteration.count == 0) {
       beta.vect.next<-beta.update.vect
     } else {
-      beta.vect.next<-beta.vect.next+beta.update.vect
+      beta.vect.next <- beta.vect.next+beta.update.vect
     }
+    iteration.count<-iteration.count+1
     
     #Calculate value of convergence statistic and test whether meets convergence criterion
     converge.value<-abs(dev.total-dev.old)/(abs(dev.total)+0.1)
