@@ -85,13 +85,13 @@ opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 
 # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
- mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+mod <- ds.glm(x='D', formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 
 # Example 3: run the above GLM with interaction HDL and GENDER
- mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
+mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
 
 # Example 4: now run a GLM but with interaction where the error follows a poisson distribution
- mod <- ds.glm(formula=D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='poisson')
+mod <- ds.glm(x='D', formula=D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='poisson')
 
 # clear the Datashield R sessions and logout
 datashield.logout(opals)

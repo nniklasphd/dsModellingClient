@@ -44,13 +44,13 @@
 #' mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 #'  
 #' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
-#'  mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+#' mod <- ds.glm(x='D', formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 #'  
 #' # Example 3: run the above GLM with interaction HDL and GENDER
-#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
+#' mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
 #'  
 #' # Example 4: now run a GLM but with interaction where the error follows a poisson distribution
-#'  mod <- ds.glm(formula=D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='poisson')
+#' mod <- ds.glm(x='D', formula=D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='poisson')
 #'  
 #' # clear the Datashield R sessions and logout
 #' datashield.logout(opals) 
@@ -102,6 +102,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
   }
   
   # check if all the variables in the lp formula are exist on the server site and if any is empty
+  message("Checking the input variables are defined and in the right format...")
   stdnames <- names(datasources)
   temp <- glmhelper2(formula)
   variables <- c()
@@ -127,7 +128,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
         datashield.assign(datasources[j], as.character(variables[[i]]), quote(as.numeric(as.character(variables[[i]]))))
       }else{
         if(is.null(x)){
-          stop("x=NULL! You must set the argument 'x' to ", inputterms[1], " because the variable ", inputterms[2], " is indicated as attached ", inputterms[1], " in ", as.character(variables[[i]]), "!", call.=FALSE)
+          stop("x=NULL! You must set the argument x to ", inputterms[1], " because the variable ", inputterms[2], " is indicated as attached ", inputterms[1], " in ", as.character(variables[[i]]), "!", call.=FALSE)
         }
         cally2 <- call('isNaDS', variables[[i]])
         d2 <- datashield.aggregate(datasources[j], cally2)[[1]]
@@ -135,8 +136,8 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
           stop("The variable ", as.character(variables[[i]]), " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
         }
         # turn the vector into numeric
-        cally <- paste0("as.numeric(as.character(", variables[[i]], ")")
-        datashield.assign(datasources[j], inputterms[2], as.symbol(cally))
+        cally <- call("as.numeric",call("as.character", variables[[i]]))
+        datashield.assign(datasources[j], inputterms[2], cally)
       }
     }
   }
@@ -147,17 +148,12 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
   # loose variables (i.e. without the 'dataFrameName$' bit if that was how the formula was given)
   formulaChr <- as.character(formula)
   # a formula has always 3 parts: '~', the outcome and the covariates part
-  if(is.null(x)){
-    formula <- formula
-  }else{
-    bits <- c()
-    for(i in 2:3){
-      bitTemp <- gsub("([$])", '', formulaChr[i])
-      bit<- gsub(x, '', bitTemp)
-      bits <- append(bits, bit)
-    }
-    formula <- as.formula(paste0(bits[1], "~", bits[2]))
+  bits <- c()
+  for(i in 2:3){
+    bit <- gsub(paste0(x,"([$])"), '', formulaChr[i])
+    bits <- append(bits, bit)
   }
+  formula <- as.formula(paste0(bits[1], "~", bits[2]))
     
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
@@ -182,7 +178,6 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
   
   while(!converge.state && iteration.count < maxit) {
     
-    message("Iteration ", iteration.count, "...")
     if(iteration.count == 0){
       if(is.null(beta.vect.next)){
         beta.vect.temp <- NULL
@@ -192,13 +187,9 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     }else{
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
-    if(is.null(x)){
-      cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, dtframe=NULL))
-    }else{
-      cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, dtframe=as.symbol(x)))
-    }
-    
+
     # call for parallel glm and retrieve results when available
+    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp))
     study.summary <- datashield.aggregate(datasources, cally)
     
     .select <- function(l, field) {
@@ -229,6 +220,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
       beta.vect.next <- beta.vect.next+beta.update.vect
     }
     iteration.count<-iteration.count+1
+    message("Iteration ", iteration.count, "...")
     
     #Calculate value of convergence statistic and test whether meets convergence criterion
     converge.value<-abs(dev.total-dev.old)/(abs(dev.total)+0.1)
@@ -276,9 +268,8 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
   #Then print out final model summary
   if(converge.state)
   {
-    family.identified<-0
-    
-    beta.vect.final<-beta.vect.next
+    family.identified <- 0
+    beta.vect.final <- beta.vect.next
     
     scale.par <- 1
     if(f$family== 'gaussian') {
@@ -293,78 +284,78 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     model.parameters<-cbind(beta.vect.final,se.vect.final,z.vect.final,pval.vect.final)
     dimnames(model.parameters)<-list(parameter.names,c("Estimate","Std. Error","z-value","p-value"))
     
-    if(CI>0)
+    if(CI > 0)
     {
-      ci.mult<-qnorm(1-(1-CI)/2)
-      low.ci.lp<-model.parameters[,1]-ci.mult*model.parameters[,2]
-      hi.ci.lp<-model.parameters[,1]+ci.mult*model.parameters[,2]
-      estimate.lp<-model.parameters[,1]
+      ci.mult <- qnorm(1-(1-CI)/2)
+      low.ci.lp <- model.parameters[,1]-ci.mult*model.parameters[,2]
+      hi.ci.lp <- model.parameters[,1]+ci.mult*model.parameters[,2]
+      estimate.lp <- model.parameters[,1]
       
       
       
-      if(family=="gaussian")
-      {
-        estimate.natural<-estimate.lp
-        low.ci.natural<-low.ci.lp
-        hi.ci.natural<-hi.ci.lp
-        name1<-paste0("low",CI,"CI")
-        name2<-paste0("high",CI,"CI")
-        ci.mat<-cbind(low.ci.lp,hi.ci.lp)
-        dimnames(ci.mat)<-list(NULL,c(name1,name2))   
+      if(family=="gaussian"){
+        estimate.natural <- estimate.lp
+        low.ci.natural <- low.ci.lp
+        hi.ci.natural <- hi.ci.lp
+        name1 <- paste0("low",CI,"CI")
+        name2 <- paste0("high",CI,"CI")
+        ci.mat <- cbind(low.ci.lp,hi.ci.lp)
+        dimnames(ci.mat) <- list(NULL,c(name1,name2))   
       }
       
-      if(family=="binomial")
-      {
-        family.identified<-1
-        num.parms<-length(low.ci.lp)
-        estimate.natural<-exp(estimate.lp)/(1+exp(estimate.lp))
-        low.ci.natural<-exp(low.ci.lp)/(1+low.ci.lp)
-        hi.ci.natural<-exp(hi.ci.lp)/(1+hi.ci.lp)
-        if(num.parms>1)
-        {
-          estimate.natural[2:num.parms]<-exp(estimate.lp[2:num.parms])
-          low.ci.natural[2:num.parms]<-exp(low.ci.lp[2:num.parms])
-          hi.ci.natural[2:num.parms]<-exp(hi.ci.lp[2:num.parms])
-          name1<-paste0("low",CI,"CI  LP")
-          name2<-paste0("high",CI,"CI  LP")
-          name3<-paste0("P or OR")
-          name4<-paste0("low",CI,"CI  P_OR")
-          name5<-paste0("high",CI,"CI  P_OR")
+      if(family=="binomial"){
+        family.identified  <-  1
+        num.parms <- length(low.ci.lp)
+        estimate.natural <- exp(estimate.lp)/(1+exp(estimate.lp))
+        low.ci.natural <- exp(low.ci.lp)/(1+low.ci.lp)
+        hi.ci.natural <- exp(hi.ci.lp)/(1+hi.ci.lp)
+        if(num.parms > 1){
+          estimate.natural[2:num.parms] <- exp(estimate.lp[2:num.parms])
+          low.ci.natural[2:num.parms] <- exp(low.ci.lp[2:num.parms])
+          hi.ci.natural[2:num.parms] <- exp(hi.ci.lp[2:num.parms])
+          name1 <- paste0("low",CI,"CI.LP")
+          name2 <- paste0("high",CI,"CI.LP")
+          name3 <- paste0("P_or_OR")
+          name4 <- paste0("low",CI,"CI.P_OR")
+          name5 <- paste0("high",CI,"CI.P_OR")
         }       
-        ci.mat<-cbind(low.ci.lp,hi.ci.lp,estimate.natural,low.ci.natural,hi.ci.natural)
-        dimnames(ci.mat)<-list(NULL,c(name1,name2,name3,name4,name5))
+        ci.mat <- cbind(low.ci.lp,hi.ci.lp,estimate.natural,low.ci.natural,hi.ci.natural)
+        dimnames(ci.mat) <- list(NULL,c(name1,name2,name3,name4,name5))
         
       }
       
-      if(family=="poisson")
-      {
-        family.identified<-1
-        estimate.natural[2:num.parms]<-exp(estimate.lp[2:num.parms])
-        low.ci.natural[2:num.parms]<-exp(low.ci.lp[2:num.parms])
-        hi.ci.natural[2:num.parms]<-exp(hi.ci.lp[2:num.parms])
-        name1<-paste0("low",CI,"CI  LP")
-        name2<-paste0("high",CI,"CI  LP")
-        name3<-paste0("EXPONENTIATED RR")
-        name4<-paste0("low",CI,"CI  EXP")
-        name5<-paste0("high",CI,"CI  EXP")
-        ci.mat<-cbind(low.ci.lp,hi.ci.lp,estimate.natural,low.ci.natural,hi.ci.natural)
-        dimnames(ci.mat)<-list(NULL,c(name1,name2,name3,name4,name5))        
+      if(family=="poisson"){
+        family.identified <- 1
+        num.parms <- length(low.ci.lp)
+        estimate.natural <- exp(estimate.lp)/(1+exp(estimate.lp))
+        low.ci.natural <- exp(low.ci.lp)/(1+low.ci.lp)
+        hi.ci.natural <- exp(hi.ci.lp)/(1+hi.ci.lp)
+        estimate.natural[2:num.parms] <- exp(estimate.lp[2:num.parms])
+        low.ci.natural[2:num.parms] <- exp(low.ci.lp[2:num.parms])
+        hi.ci.natural[2:num.parms] <- exp(hi.ci.lp[2:num.parms])
+        name1 <- paste0("low",CI,"CI.LP")
+        name2 <- paste0("high",CI,"CI.LP")
+        name3 <- paste0("EXPONENTIATED RR")
+        name4 <- paste0("low",CI,"CI.EXP")
+        name5 <- paste0("high",CI,"CI.EXP")
+        ci.mat <- cbind(low.ci.lp,hi.ci.lp,estimate.natural,low.ci.natural,hi.ci.natural)
+        dimnames(ci.mat) <- list(NULL,c(name1,name2,name3,name4,name5))        
       }
       
       if(family.identified==0)
       {
-        estimate.natural<-estimate.lp
-        low.ci.natural<-low.ci.lp
-        hi.ci.natural<-hi.ci.lp
-        name1<-paste0("low",CI,"CI")
-        name2<-paste0("high",CI,"CI")
-        ci.mat<-cbind(low.ci.lp,hi.ci.lp)
-        dimnames(ci.mat)<-list(NULL,c(name1,name2))   
+        estimate.natural <- estimate.lp
+        low.ci.natural <- low.ci.lp
+        hi.ci.natural <- hi.ci.lp
+        name1 <- paste0("low",CI,"CI")
+        name2 <- paste0("high",CI,"CI")
+        ci.mat <- cbind(low.ci.lp,hi.ci.lp)
+        dimnames(ci.mat) <- list(NULL,c(name1,name2))   
       }
       
     }
     
-    model.parameters<-cbind(model.parameters,ci.mat)
+    model.parameters <- cbind(model.parameters,ci.mat)
     
     glmds <- list(
       formula=formula,
@@ -380,7 +371,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     return(glmds)
   } else {
     warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
-    retun(NULL)
+    return(NULL)
   }
   
 }
