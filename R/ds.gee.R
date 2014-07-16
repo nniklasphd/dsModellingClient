@@ -100,7 +100,7 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
     startCoeff <- rep(0, l2)
   }else{
     if(l1 != l2){
-      stop("The number starting beta values must be the same as the number of variables in the formula!", call.=FALSE)
+      stop("The number starting beta values is incorrect!", call.=FALSE)
     }
   }
   
