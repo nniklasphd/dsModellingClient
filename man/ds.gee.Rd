@@ -92,4 +92,9 @@ datashield.logout(opals)
 \author{
 Gaye, A.; Jones EM.
 }
+\references{
+Jones EM, Sheehan NA, Gaye A, Laflamme P, Burton P.
+Combined analysis of correlated data when data cannot be
+pooled. Stat 2013; 2: 72-85.
+}
 

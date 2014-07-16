@@ -48,6 +48,9 @@
 #' 
 #' }
 #' 
+#' @references Jones EM, Sheehan NA, Gaye A, Laflamme P, Burton P. Combined analysis of correlated data
+#' when data cannot be pooled. Stat 2013; 2: 72-85.
+#'
 ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', clusterID=NULL, startCoeff=NULL, userMatrix=NULL, 
                    maxit=20, display=FALSE, datasources=NULL){
   
