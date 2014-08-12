@@ -101,7 +101,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     }
   }
   
-  # check if all the variables in the lp formula are exist on the server site and if any is empty
+  # check if all the variables in the lp formula exist on the server site and if any is empty
   message("Checking the input variables are defined and in the right format...")
   stdnames <- names(datasources)
   temp <- glmhelper2(formula)
