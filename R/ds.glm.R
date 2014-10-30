@@ -102,7 +102,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
   }
   
   # check if all the variables in the lp formula exist on the server site and if any is empty
-  message("Checking the input variables are defined and in the right format...")
+  message("Checking if input variables are defined and in the right format...")
   stdnames <- names(datasources)
   temp <- glmhelper2(formula)
   variables <- c()
@@ -141,6 +141,12 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
       }
     }
   }
+  
+  # check if all the studies have the same number of levels for categorical variables in the formula
+  # if they have differing number of levels create dummy levels to avoid error related to that issue
+  message("Ensuring input factor variables have the same levels in all studies...")
+  checkoutput <- checkLevels(formula, temp, datasources)
+  formula <- checkoutput 
   
   # the variables have been turned into numeric to avoid issues with factors if for example
   # a poisson distribution is used for the fitted model. The numeric variables were saved 
