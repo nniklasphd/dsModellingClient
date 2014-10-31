@@ -1,7 +1,7 @@
 Package: dsModellingClient
 Maintainer: <datashield@obiba.org>
 Author: <datashield@obiba.org>
-Version: 3.0.1
+Version: 3.1.0
 License: GPL-3
 Title: DataSHIELD client site functions for statistical modelling
 Description: DataSHIELD client site functions for statistical modelling

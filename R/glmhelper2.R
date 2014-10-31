@@ -19,6 +19,7 @@ glmhelper2 <- function(input){
   }
   if(length(explvars) == 1){
     tempholder <- append(tempholder, explvars)
+    ff <- tempholder
   }else{
     while(length(all.terms) > 1){
       if(as.character(all.terms)[[1]] == "$"){
@@ -49,9 +50,12 @@ glmhelper2 <- function(input){
       }
     }
   }
-  qq <- as.character(ff[[3]])
-  if(qq[1] == '*' ){
-    tempholder <- append(tempholder, qq[2])
+  if(length(ff) > 2){
+    qq <- as.character(ff[[3]])
+    if(qq[1] == '*' ){
+      tempholder <- append(tempholder, qq[2])
+    }
   }
+
   return(tempholder)
 }

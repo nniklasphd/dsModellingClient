@@ -10,8 +10,8 @@ ds.gee(x = NULL, formula = NULL, family = NULL, corStructure = "ar1",
   \item{x}{the name of the data frame that hold the
   variables in the regression formula.}
 
-  \item{formula}{an object of class \code{formula} which
-  describes the linear predictor of the model to fit.}
+  \item{formula}{a string character, the formula which
+  describes the model to be fitted.}
 
   \item{family}{a character, the description of the error
   distribution: 'binomial', 'gaussian', 'Gamma' or
@@ -75,7 +75,7 @@ through the data.frame.
   opals <- datashield.login(logins=geeLoginData,assign=TRUE)
 
   # set some parameters for the function 9the rest are set to default values)
-  myformula <- response~1+sex+age.60
+  myformula <- 'response~1+sex+age.60'
   myfamily <- 'binomial'
   startbetas <- c(-1,1,0)
   clusters <- 'id'

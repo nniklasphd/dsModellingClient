@@ -1,8 +1,8 @@
-\name{checkLevels}
-\alias{checkLevels}
+\name{glmhelper4}
+\alias{glmhelper4}
 \title{Deals with differing factor levels between studies}
 \usage{
-checkLevels(form, variables, datasources)
+glmhelper4(form, variables, datasources)
 }
 \arguments{
   \item{form}{an object of type formula, the input formula}
@@ -21,7 +21,9 @@ and the initial formula if levels were the same across
 studies.
 }
 \description{
-This is an internal function.
+This is an internal function required by the client
+function \code{ds.glm} to carry ensure all variables ahve
+the same number of levels in all studies.
 }
 \details{
 

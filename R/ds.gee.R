@@ -8,7 +8,7 @@
 #' goes on until convergence is achieved. The input data should not contain missing values.
 #' The data must be in a data.frame obejct and the variables must be refer to through the data.frame.
 #' @param x the name of the data frame that hold the variables in the regression formula.
-#' @param formula an object of class \code{formula} which describes the linear predictor of the model to fit.
+#' @param formula a string character, the formula which describes the model to be fitted.
 #' @param family a character, the description of the error distribution:  'binomial', 'gaussian', 
 #' 'Gamma' or 'poisson'.
 #' @param corStructure a character, the correlation structure: 'ar1', 'exchangeable', 'independence', 
@@ -34,7 +34,7 @@
 #'   opals <- datashield.login(logins=geeLoginData,assign=TRUE)
 #'   
 #'   # set some parameters for the function 9the rest are set to default values)
-#'   myformula <- response~1+sex+age.60
+#'   myformula <- 'response~1+sex+age.60'
 #'   myfamily <- 'binomial'
 #'   startbetas <- c(-1,1,0)
 #'   clusters <- 'id'
@@ -53,6 +53,9 @@
 #'
 ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', clusterID=NULL, startCoeff=NULL, userMatrix=NULL, 
                    maxit=20, display=FALSE, datasources=NULL){
+  
+  # turn the input formula into an object of type 'formula', it is given as a string character
+  formula <- as.formula(formula)
   
   # if no opal login details were provided look for 'opal' objects in the environment
   if(is.null(datasources)){

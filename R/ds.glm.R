@@ -6,7 +6,7 @@
 #' model. The estimates returned are then combined and updated coefficients estimate sent
 #' back for a new fit. This iterative process goes on until convergence is achieved.
 #' @param x the name if any of the data frame that hold the variables in the regression formula
-#' @param formula an object of class \code{formula} which describes the model to be fitted
+#' @param formula a string character, the formula which describes the model to be fitted
 #' @param family a character, the description of the error distribution function to use in the model
 #' @param startCoeff a numeric vector, the starting values for the beta coefficients. If starting
 #' values are not provided they are set to 0 for each beta at the start of the iterations.
@@ -41,16 +41,16 @@
 #' opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
 #' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-#' mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+#' mod <- ds.glm(x='D', formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
 #'  
 #' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
-#' mod <- ds.glm(x='D', formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+#' mod <- ds.glm(x='D', formula='D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
 #'  
 #' # Example 3: run the above GLM with interaction HDL and GENDER
-#' mod <- ds.glm(x='D', formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
+#' mod <- ds.glm(x='D', formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER',family='binomial')
 #'  
 #' # Example 4: now run a GLM but with interaction where the error follows a poisson distribution
-#' mod <- ds.glm(x='D', formula=D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='poisson')
+#' mod <- ds.glm(x='D', formula='D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='poisson')
 #'  
 #' # clear the Datashield R sessions and logout
 #' datashield.logout(opals) 
@@ -61,6 +61,9 @@
 #' perspective', Norsk epidemiologi - Norwegian journal of epidemiology 2012;21(2): 231-9.
 #' 
 ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
+  
+  # turn the input formula into an object of type 'formula', it is given as a string character
+  formula <- as.formula(formula)
   
   # if no opal login details were provided look for 'opal' objects in the environment
   if(is.null(datasources)){
@@ -103,50 +106,14 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
   
   # check if all the variables in the lp formula exist on the server site and if any is empty
   message("Checking if input variables are defined and in the right format...")
-  stdnames <- names(datasources)
-  temp <- glmhelper2(formula)
-  variables <- c()
-  for(i in 1:length(temp)){
-    variables <- append(variables, temp[[i]])
-  }
-  for(i in 1:length(variables)){
-    for(j in 1: length(datasources)){
-      inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
-      if(length(inputterms) < 2){
-        cally1 <- call('exists', as.character(variables[[i]]))
-        d1 <- datashield.aggregate(datasources[j], cally1)[[1]]
-        if(!d1){
-          stop("The variable ", as.character(variables[[i]]),  " is not defined in ", stdnames[j], ".", call.=FALSE)
-        }else{
-          cally2 <- call('isNaDS', variables[[i]])
-          d2 <- datashield.aggregate(datasources[j], cally2)[[1]]
-          if(d2){ 
-            stop("The variable ", as.character(variables[[i]]), " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
-          }
-        }
-        # turn the vector into numeric
-        datashield.assign(datasources[j], as.character(variables[[i]]), quote(as.numeric(as.character(variables[[i]]))))
-      }else{
-        if(is.null(x)){
-          stop("x=NULL! You must set the argument x to ", inputterms[1], " because the variable ", inputterms[2], " is indicated as attached ", inputterms[1], " in ", as.character(variables[[i]]), "!", call.=FALSE)
-        }
-        cally2 <- call('isNaDS', variables[[i]])
-        d2 <- datashield.aggregate(datasources[j], cally2)[[1]]
-        if(d2){ 
-          stop("The variable ", as.character(variables[[i]]), " in ", stdnames[j], " is empty (all values are 'NA').", call.=FALSE)
-        }
-        # turn the vector into numeric
-        cally <- call("as.numeric",call("as.character", variables[[i]]))
-        datashield.assign(datasources[j], inputterms[2], cally)
-      }
-    }
-  }
+  checks1output <- glmhelper3(x, formula, datasources)
+  variables <- checks1output 
   
   # check if all the studies have the same number of levels for categorical variables in the formula
   # if they have differing number of levels create dummy levels to avoid error related to that issue
   message("Ensuring input factor variables have the same levels in all studies...")
-  checkoutput <- checkLevels(formula, temp, datasources)
-  formula <- checkoutput 
+  checks2output <- glmhelper4(formula, variables, datasources)
+  formula <- checks2output 
   
   # the variables have been turned into numeric to avoid issues with factors if for example
   # a poisson distribution is used for the fitted model. The numeric variables were saved 
