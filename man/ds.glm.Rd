@@ -3,7 +3,8 @@
 \title{Fits a Generalized Linear Model (GLM) model}
 \usage{
 ds.glm(x = NULL, formula = NULL, family = NULL, startCoeff = NULL,
-  maxit = 15, CI = 0.95, viewIter = FALSE, datasources = NULL)
+  weights = NULL, offset = NULL, maxit = 15, CI = 0.95,
+  viewIter = FALSE, datasources = NULL)
 }
 \arguments{
   \item{x}{the name if any of the data frame that hold the
@@ -19,6 +20,14 @@ ds.glm(x = NULL, formula = NULL, family = NULL, startCoeff = NULL,
   for the beta coefficients. If starting values are not
   provided they are set to 0 for each beta at the start of
   the iterations.}
+
+  \item{weights}{an optional vector of ‘prior weights’ to
+  be used in the fitting process. Should be NULL or a
+  numeric vector.}
+
+  \item{offset}{null or a numreric vector that can be used
+  to specify an a priori known component to be included in
+  the linear predictor during fitting.}
 
   \item{maxit}{the number of iterations of IWLS used
   instructions to each computer requesting non-disclosing

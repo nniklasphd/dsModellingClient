@@ -10,6 +10,10 @@
 #' @param family a character, the description of the error distribution function to use in the model
 #' @param startCoeff a numeric vector, the starting values for the beta coefficients. If starting
 #' values are not provided they are set to 0 for each beta at the start of the iterations.
+#' @param weights an optional vector of ‘prior weights’ to be used in the fitting process. Should be NULL or 
+#' a numeric vector.
+#' @param offset  null or a numreric vector that can be used to specify an a priori known component to be 
+#' included in the linear predictor during fitting.
 #' @param maxit the number of iterations of IWLS used
 #' instructions to each computer requesting non-disclosing summary statistics.
 #' The summaries are then combined to estimate the parameters of the model; these
@@ -60,7 +64,7 @@
 #' @references Jones EM, 'DataSHIELD-shared individual-level analysis without sharing the data: a biostatistical
 #' perspective', Norsk epidemiologi - Norwegian journal of epidemiology 2012;21(2): 231-9.
 #' 
-ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
+ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=NULL, offset=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
   # turn the input formula into an object of type 'formula', it is given as a string character
   formula <- as.formula(formula)
@@ -162,7 +166,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, maxit=15,
     }
 
     # call for parallel glm and retrieve results when available
-    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp))
+    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, weights, offset))
     study.summary <- datashield.aggregate(datasources, cally)
     
     .select <- function(l, field) {
