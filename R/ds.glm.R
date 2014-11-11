@@ -1,36 +1,27 @@
 #' 
-#' @title Fits a Generalized Linear Model (GLM) model
-#' @description A function that fits generalized linear models
+#' @title Runs a combined GLM analysis of non-pooled data
+#' @description A function fit generalized linear models
 #' @details It enables a parallelized analysis of individual-level data sitting 
-#' on distinct servers by sending commands to each data computer to fit a regression 
-#' model. The estimates returned are then combined and updated coefficients estimate sent
-#' back for a new fit. This iterative process goes on until convergence is achieved.
-#' @param x the name if any of the data frame that hold the variables in the regression formula
-#' @param formula a string character, the formula which describes the model to be fitted
-#' @param family a character, the description of the error distribution function to use in the model
-#' @param startCoeff a numeric vector, the starting values for the beta coefficients. If starting
-#' values are not provided they are set to 0 for each beta at the start of the iterations.
-#' @param weights an optional vector of ‘prior weights’ to be used in the fitting process. Should be NULL or 
-#' a numeric vector.
-#' @param offset  null or a numreric vector that can be used to specify an a priori known component to be 
-#' included in the linear predictor during fitting.
+#' on distinct servers by sending 
+#' @param formula an object of class \code{formula} which describes the model to be fitted
+#' @param family a description of the error distribution function to use in the model
 #' @param maxit the number of iterations of IWLS used
 #' instructions to each computer requesting non-disclosing summary statistics.
 #' The summaries are then combined to estimate the parameters of the model; these
-#' parameters are the same as those obtained if the data were 'physically' pooled
+#' parameters are the same as those obtained if the data were 'physically' pooled.
 #' @param CI a numeric, the confidence interval.
 #' @param viewIter a boolean, tells whether the results of the intermediate iterations
-#' should be printed on screen or not. Default is FALSE (i.e. only final results are shown)
+#' should be printed on screen or not. Default is FALSE (i.e. only final results are shown).
 #' @param datasources a list of opal object(s) obtained after login to opal servers;
-#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources
+#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
 #' @return coefficients a named vector of coefficients
 #' @return residuals the 'working' residuals, that is the residuals in the final
 #' iteration of the IWLS fit.
 #' @return fitted.values the fitted mean values, obtained by transforming the
-#' linear predictors by the inverse of the link function
-#' @return rank the numeric rank of the fitted linear model
-#' @return family the \code{family} object used
-#' @return linear.predictors the linear fit on link scale
+#' linear predictors by the inverse of the link function.
+#' @return rank the numeric rank of the fitted linear model.
+#' @return family the \code{family} object used.
+#' @return linear.predictors the linear fit on link scale.
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
 #' @author Burton,P;Gaye,A;Laflamme,P
@@ -41,33 +32,23 @@
 #' data(logindata)
 #' 
 #' # login and assign some variables to R
-#' myvar <- list('DIS_DIAB', 'PM_BMI_CONTINUOUS', 'LAB_HDL', 'PM_BMI_CATEGORICAL', 'GENDER')
+#' myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
 #' opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
 #' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-#' mod <- ds.glm(x='D', formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
+#' mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 #'  
 #' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
-#' mod <- ds.glm(x='D', formula='D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
+#'  mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
 #'  
 #' # Example 3: run the above GLM with interaction HDL and GENDER
-#' mod <- ds.glm(x='D', formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER',family='binomial')
+#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
 #'  
-#' # Example 4: now run a GLM but with interaction where the error follows a poisson distribution
-#' mod <- ds.glm(x='D', formula='D$PM_BMI_CATEGORICAL~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='poisson')
-#'  
-#' # clear the Datashield R sessions and logout
-#' datashield.logout(opals) 
-#'  
+#' # Example 4: now run the same GLM but with interaction between BMI and HDL 
+#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family='binomial')
 #' }
-#' 
-#' @references Jones EM, 'DataSHIELD-shared individual-level analysis without sharing the data: a biostatistical
-#' perspective', Norsk epidemiologi - Norwegian journal of epidemiology 2012;21(2): 231-9.
-#' 
-ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=NULL, offset=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
-  
-  # turn the input formula into an object of type 'formula', it is given as a string character
-  formula <- as.formula(formula)
+#'
+ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
   # if no opal login details were provided look for 'opal' objects in the environment
   if(is.null(datasources)){
@@ -88,53 +69,29 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=N
     }
   }
   
-  # check if user have provided a formula
-  if(is.null(formula) | class(formula) != 'formula'){
-    stop("Please provide a valid formula!", call.=FALSE)
+  if(is.null(formula)){
+    message(" ALERT!")
+    message(" Please provide a valid regression formula")
+    stop(" End of process!", call.=FALSE)
   }
   
-  # family 
-  families <- c("binomial", "gaussian", "Gamma", "poisson")
-  if(is.null(family) | !(family %in% families)){
-    stop("Please provide a valid 'family' parameter: 'binomial', 'gaussian', 'Gamma' or 'poisson'.", call.=FALSE)
+  if(is.null(family)){
+    message(" ALERT!")
+    message(" Please provide a valid 'family' argument")
+    stop(" End of process!", call.=FALSE)
   }
   
-  # if the user provides starting values check that vector is of the same length than the variables in the formula
-  if(!(is.null(startCoeff))){
-    l1 <- length(startCoeff)
-    l2 <- length(all.vars(formula))
-    if(l1 != l2){
-      stop("The number starting beta values must be the same as the number of variables in the formula!", call.=FALSE)
-    }
-  }
+  # call the helper function that extracts the outcome and covariates 
+  # from the regression formula as objects; these objects are required 
+  # by the function that carries out the preliminary checks
+  vars2check <-  glmhelper2(formula)
   
-  # check if all the variables in the lp formula exist on the server site and if any is empty
-  message("Checking if input variables are defined and in the right format...")
-  checks1output <- glmhelper3(x, formula, datasources)
-  variables <- checks1output 
+  # call the function that checks the variables are available and not empty
+  #datasources <- ds.checkvar(datasources, vars2check)
   
-  # check if all the studies have the same number of levels for categorical variables in the formula
-  # if they have differing number of levels create dummy levels to avoid error related to that issue
-  message("Ensuring input factor variables have the same levels in all studies...")
-  checks2output <- glmhelper4(formula, variables, datasources)
-  formula <- checks2output 
-  
-  # the variables have been turned into numeric to avoid issues with factors if for example
-  # a poisson distribution is used for the fitted model. The numeric variables were saved 
-  # with the same names; now we re-construct the linear predictor formula using the saved 
-  # loose variables (i.e. without the 'dataFrameName$' bit if that was how the formula was given)
-  formulaChr <- as.character(formula)
-  # a formula has always 3 parts: '~', the outcome and the covariates part
-  bits <- c()
-  for(i in 2:3){
-    bit <- gsub(paste0(x,"([$])"), '', formulaChr[i])
-    bits <- append(bits, bit)
-  }
-  formula <- as.formula(paste0(bits[1], "~", bits[2]))
-    
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
-  beta.vect.next <- startCoeff
+  beta.vect.next <- NULL
   
   #Iterations need to be counted. Start off with the count at 0
   #and increment by 1 at each new iteration
@@ -155,18 +112,17 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=N
   
   while(!converge.state && iteration.count < maxit) {
     
-    if(iteration.count == 0){
-      if(is.null(beta.vect.next)){
-        beta.vect.temp <- NULL
-      }else{
-        beta.vect.temp <- paste0(startCoeff, collapse=",")
-      }
+    iteration.count<-iteration.count+1
+    
+    message("Iteration ", iteration.count, "...")
+    if(is.null(beta.vect.next)){
+      beta.vect.temp <- NULL
     }else{
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
-
+    cally <- as.call(list(quote(glmDS), formula, as.symbol(family), beta.vect.temp))
+    
     # call for parallel glm and retrieve results when available
-    cally <- as.call(list(quote(glmDS), formula, family, beta.vect.temp, weights, offset))
     study.summary <- datashield.aggregate(datasources, cally)
     
     .select <- function(l, field) {
@@ -190,14 +146,12 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=N
     # Create beta vector update terms
     beta.update.vect<-variance.covariance.matrix.total %*% score.vect.total
     
-    # update terms to current beta vector to obtain new beta vector for next iteration
-    if(iteration.count == 0) {
+    #Add update terms to current beta vector to obtain new beta vector for next iteration
+    if(is.null(beta.vect.next)) {
       beta.vect.next<-beta.update.vect
     } else {
-      beta.vect.next <- beta.vect.next+beta.update.vect
+      beta.vect.next<-beta.vect.next+beta.update.vect
     }
-    iteration.count<-iteration.count+1
-    message("Iteration ", iteration.count, "...")
     
     #Calculate value of convergence statistic and test whether meets convergence criterion
     converge.value<-abs(dev.total-dev.old)/(abs(dev.total)+0.1)
@@ -245,8 +199,9 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=N
   #Then print out final model summary
   if(converge.state)
   {
-    family.identified <- 0
-    beta.vect.final <- beta.vect.next
+    family.identified<-0
+    
+    beta.vect.final<-beta.vect.next
     
     scale.par <- 1
     if(f$family== 'gaussian') {
@@ -332,7 +287,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=N
       
     }
     
-    model.parameters <- cbind(model.parameters,ci.mat)
+    model.parameters<-cbind(model.parameters,ci.mat)
     
     glmds <- list(
       formula=formula,
@@ -348,7 +303,7 @@ ds.glm <- function(x=NULL, formula=NULL, family=NULL, startCoeff=NULL, weights=N
     return(glmds)
   } else {
     warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
-    return(NULL)
+    retun(NULL)
   }
   
 }
