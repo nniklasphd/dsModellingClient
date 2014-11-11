@@ -303,7 +303,7 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     return(glmds)
   } else {
     warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
-    retun(NULL)
+    return(NULL)
   }
   
 }
