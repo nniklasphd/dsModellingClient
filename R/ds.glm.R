@@ -3,7 +3,7 @@
 #' @description A function fit generalized linear models
 #' @details It enables a parallelized analysis of individual-level data sitting 
 #' on distinct servers by sending 
-#' @param formula an object of class \code{formula} which describes the model to be fitted
+#' @param formula a character, a formula which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
 #' @param maxit the number of iterations of IWLS used
 #' instructions to each computer requesting non-disclosing summary statistics.
@@ -12,6 +12,8 @@
 #' @param CI a numeric, the confidence interval.
 #' @param viewIter a boolean, tells whether the results of the intermediate iterations
 #' should be printed on screen or not. Default is FALSE (i.e. only final results are shown).
+#' @param offset a character, the name  an a priori known component to be included in the linear 
+#' predictor during fitting. This should be NULL or a numeric vector of length equal to the number of cases.
 #' @param datasources a list of opal object(s) obtained after login to opal servers;
 #' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
 #' @return coefficients a named vector of coefficients
@@ -36,19 +38,19 @@
 #' opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
 #' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-#' mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+#' mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
 #'  
 #' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
-#'  mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+#'  mod <- ds.glm(formula='D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
 #'  
 #' # Example 3: run the above GLM with interaction HDL and GENDER
-#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
+#'  mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER',family='binomial')
 #'  
 #' # Example 4: now run the same GLM but with interaction between BMI and HDL 
-#'  mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family='binomial')
+#'  mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER',family='binomial')
 #' }
 #'
-ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
+ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE, offset=NULL, datasources=NULL) {
   
   # if no opal login details were provided look for 'opal' objects in the environment
   if(is.null(datasources)){
@@ -73,6 +75,12 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     message(" ALERT!")
     message(" Please provide a valid regression formula")
     stop(" End of process!", call.=FALSE)
+  }else{
+    # if the argument is not NULL add it to the formula
+    if(!(is.null(offset))){
+      formula <- paste0(formula, "+", offset)
+    }
+    formula <- as.formula(formula)
   }
   
   if(is.null(family)){
@@ -120,7 +128,7 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     }else{
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
-    cally <- as.call(list(quote(glmDS), formula, as.symbol(family), beta.vect.temp))
+    cally <- call('glmDS', formula, as.symbol(family), beta.vect.temp)
     
     # call for parallel glm and retrieve results when available
     study.summary <- datashield.aggregate(datasources, cally)
