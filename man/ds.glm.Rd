@@ -3,11 +3,11 @@
 \title{Runs a combined GLM analysis of non-pooled data}
 \usage{
 ds.glm(formula = NULL, family = NULL, maxit = 15, CI = 0.95,
-  viewIter = FALSE, datasources = NULL)
+  viewIter = FALSE, offset = NULL, datasources = NULL)
 }
 \arguments{
-  \item{formula}{an object of class \code{formula} which
-  describes the model to be fitted}
+  \item{formula}{a character, a formula which describes the
+  model to be fitted}
 
   \item{family}{a description of the error distribution
   function to use in the model}
@@ -25,6 +25,11 @@ ds.glm(formula = NULL, family = NULL, maxit = 15, CI = 0.95,
   the intermediate iterations should be printed on screen
   or not. Default is FALSE (i.e. only final results are
   shown).}
+
+  \item{offset}{a character, the name an a priori known
+  component to be included in the linear predictor during
+  fitting. This should be NULL or a numeric vector of
+  length equal to the number of cases.}
 
   \item{datasources}{a list of opal object(s) obtained
   after login to opal servers; these objects also hold the
@@ -70,16 +75,16 @@ myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
 opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 
 # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
 
 # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
- mod <- ds.glm(formula=D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER,family='binomial')
+ mod <- ds.glm(formula='D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
 
 # Example 3: run the above GLM with interaction HDL and GENDER
- mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER,family='binomial')
+ mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER',family='binomial')
 
 # Example 4: now run the same GLM but with interaction between BMI and HDL
- mod <- ds.glm(formula=D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER,family='binomial')
+ mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER',family='binomial')
 }
 }
 \author{

@@ -1,0 +1,32 @@
+\name{lexusHelper1}
+\alias{lexusHelper1}
+\title{Generates a default value to use as interval width}
+\usage{
+lexusHelper1(datasources, exitTime)
+}
+\arguments{
+  \item{datasources}{a list of opal object(s) obtained
+  after login to opal servers; these objects also hold the
+  data assigned to R, as a \code{data frame}, from opal
+  datasources}
+
+  \item{exitTime}{a character, the name of the column that
+  holds the exit times.}
+}
+\value{
+a numeric value
+}
+\description{
+This is an internal function required by the function
+\code{ds.lexus}
+}
+\details{
+
+
+If the analyst has not provided an interval width used to
+generate the expanded table in a piecewise exponential
+regression, this functions generates a default value which
+is 1/10 of the global mean of the exit time values.
+}
+\keyword{internal}
+
