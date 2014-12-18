@@ -72,17 +72,13 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
   }
   
   if(is.null(formula)){
-    message(" ALERT!")
-    message(" Please provide a valid regression formula")
-    stop(" End of process!", call.=FALSE)
+    stop(" Please provide a valid regression formula!", call.=FALSE)
   }else{
     formula <- as.formula(formula)
   }
   
   if(is.null(family)){
-    message(" ALERT!")
-    message(" Please provide a valid 'family' argument")
-    stop(" End of process!", call.=FALSE)
+    stop(" Please provide a valid 'family' argument!", call.=FALSE)
   }
   
   # call the helper function that extracts the outcome and covariates 
@@ -124,9 +120,9 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     }else{
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
-    cally <- call('glmDS', formula, as.symbol(family), beta.vect.temp, offset)
     
-    # call for parallel glm and retrieve results when available
+    # call the server site function
+    cally <- call('glmDS', formula, as.symbol(family), beta.vect.temp, offset)
     study.summary <- datashield.aggregate(datasources, cally)
     
     .select <- function(l, field) {
