@@ -7,7 +7,7 @@
 #' then combined and updated coefficients estimate sent back for a new fit. This iterative process 
 #' goes on until convergence is achieved. The input data should not contain missing values.
 #' The data must be in a data.frame obejct and the variables must be refer to through the data.frame.
-#' @param x the name of the data frame that hold the variables in the regression formula.
+#' @param data the name of the data frame that hold the variables in the regression formula.
 #' @param formula a string character, the formula which describes the model to be fitted.
 #' @param family a character, the description of the error distribution:  'binomial', 'gaussian', 
 #' 'Gamma' or 'poisson'.
@@ -41,7 +41,7 @@
 #'   mycorr <- 'ar1'
 #'   
 #'   # run a GEE analysis with the above specifed parameters
-#'   xx <- ds.gee(x='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
+#'   xx <- ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
 #'   
 #' # clear the Datashield R sessions and logout
 #' datashield.logout(opals) 
@@ -51,7 +51,7 @@
 #' @references Jones EM, Sheehan NA, Gaye A, Laflamme P, Burton P. Combined analysis of correlated data
 #' when data cannot be pooled. Stat 2013; 2: 72-85.
 #'
-ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', clusterID=NULL, startCoeff=NULL, userMatrix=NULL, 
+ds.gee <- function(data=NULL, formula=NULL, family=NULL, corStructure='ar1', clusterID=NULL, startCoeff=NULL, userMatrix=NULL, 
                    maxit=20, display=FALSE, datasources=NULL){
   
   # turn the input formula into an object of type 'formula', it is given as a string character
@@ -77,10 +77,10 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
   }
   
   # check if user have provided the name of the dataset and if the dataset is defined
-  if(is.null(x)){
-    stop("x=NULL; please provide the name of the dataset that holds the variables!", call.=FALSE)
+  if(is.null(data)){
+    stop("data=NULL; please provide the name of the dataset that holds the variables!", call.=FALSE)
   }else{
-    defined <- isDefined(datasources, x)
+    defined <- isDefined(datasources, data)
   }
   
   # check if user have provided a formula
@@ -127,7 +127,7 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
   }
   
   # check if the input dataframe is complete and if the variables in the lp formula are in the input dataframe
-  cally <- call('complete.cases', as.symbol(x))
+  cally <- call('complete.cases', as.symbol(data))
   datashield.assign(datasources, 'Dcomplete', cally)
   
   stdnames <- names(datasources)
@@ -140,25 +140,25 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
   for(i in 1:length(variables)){
     for(j in 1: length(datasources)){
       lengthDcomplete <- datashield.aggregate(datasources[j],paste0("length(Dcomplete)"))[[1]]
-      nrowD <- datashield.aggregate(datasources[j], paste0("dim(", x, ")"))[[1]][1]
+      nrowD <- datashield.aggregate(datasources[j], paste0("dim(", data, ")"))[[1]][1]
       if(lengthDcomplete != nrowD){
-        stop("The input dataset ", x,  " in ", stdnames[j] , " contains one or more missing values. Only complete datasets are allowed in GEE analysis.", call.=FALSE)
+        stop("The input dataset ", data,  " in ", stdnames[j] , " contains one or more missing values. Only complete datasets are allowed in GEE analysis.", call.=FALSE)
       }else{
         inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
         if(length(inputterms) > 1){
           if(!(inputerms[2] %in% colsD)){
-            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", x, " in ", stdnames[j], call.=FALSE)
+            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
           }
         }else{
           if(!(as.character(variables[[i]]) %in% colsD)){
-            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", x, " in ", stdnames[j], call.=FALSE)
+            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
           }
         }
       }
     }
   }
   
-  # loop until convergence is achieved or the maximum number of iterations reached  
+  # loop until convergence is achieved or the maximum number of iterations is reached  
   for(r in 1:maxit){
     
     if(r == 1){ 
@@ -180,7 +180,7 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
     # call the server side funtion 'alphaPhiDS'
     for(i in 1:length(datasources)){
       # run function and store relevant output
-      cally <- as.call(list(quote(alphaPhiDS), as.symbol(x), formula, family, clusterID,corStructure,betas))
+      cally <- as.call(list(quote(alphaPhiDS), as.symbol(data), formula, family, clusterID,corStructure,betas))
       temp <- datashield.aggregate(datasources[i], cally)
       output1 <- temp[[1]]
       Ns <- append(Ns, output1$N)
@@ -203,7 +203,7 @@ ds.gee <- function(x=NULL, formula=NULL, family=NULL, corStructure='ar1', cluste
     # # call the server side funtion 'scoreVectDS'
     for(i in 1:length(datasources)){
       userMat <- userMatrix[[i]]
-      cally <- as.call(list(quote(scoreVectDS), as.symbol(x), formula, family, clusterID, corStructure, alpha.comb,phi.comb,betas,userMat))
+      cally <- as.call(list(quote(scoreVectDS), as.symbol(data), formula, family, clusterID, corStructure, alpha.comb,phi.comb,betas,userMat))
       temp <- datashield.aggregate(datasources[i], cally)
       output3 <- temp[[1]]
       score.vects[[i]] <- output3$score.vector

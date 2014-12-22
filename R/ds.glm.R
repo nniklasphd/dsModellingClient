@@ -5,6 +5,17 @@
 #' on distinct servers by sending 
 #' @param formula a character, a formula which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
+#' @param offset  null or a numreric vector that can be used to specify an a priori known component to be 
+#' included in the linear predictor during fitting.
+#' @param weights  an optional vector of 'prior weights' to be used in the fitting process. Should be NULL 
+#' or a numeric vector.
+#' @param data a character, the name of an optional data frame containing the variables in 
+#' in the \code{formula}. The process stops if a non existing data frame is indicated. 
+#' @param checks a boolean, if TRUE (default) checks that takes 1-3min are carried out to verify that the 
+#' variables in the model are defined (exist) on the server site and that they have the correct characteristics
+#' required to fit a GLM. If FALSE (not recommended if you are not an experienced user) no checks are carried 
+#' except some very basic ones and eventual error messages might not give clear indications about the cause(s)
+#' of the error.
 #' @param maxit the number of iterations of IWLS used
 #' instructions to each computer requesting non-disclosing summary statistics.
 #' The summaries are then combined to estimate the parameters of the model; these
@@ -12,8 +23,6 @@
 #' @param CI a numeric, the confidence interval.
 #' @param viewIter a boolean, tells whether the results of the intermediate iterations
 #' should be printed on screen or not. Default is FALSE (i.e. only final results are shown).
-#' @param offset a character, the name  an a priori known component to be included in the linear 
-#' predictor during fitting. This should be NULL or a numeric vector of length equal to the number of cases.
 #' @param datasources a list of opal object(s) obtained after login to opal servers;
 #' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
 #' @return coefficients a named vector of coefficients
@@ -37,57 +46,117 @@
 #' myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
 #' opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
 #' 
-#' # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-#' mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
+#' # Example 1: fit a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
+#' mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL+GENDER', data='D', family='binomial')
 #'  
-#' # Example 2: run the above GLM model with an intercept (eg. intercept = 1)
-#'  mod <- ds.glm(formula='D$DIS_DIAB~1+D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER',family='binomial')
+#' # Example 2: fit the above GLM model with an intercept (eg. intercept = 1)
+#'  mod <- ds.glm(formula='DIS_DIAB~1+PM_BMI_CONTINUOUS+LAB_HDL+GENDER', data='D', family='binomial')
 #'  
-#' # Example 3: run the above GLM with interaction HDL and GENDER
-#'  mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS+D$LAB_HDL*D$GENDER',family='binomial')
+#' # Example 3: fit the above GLM with interaction HDL and GENDER
+#'  mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL*GENDER', data='D', family='binomial')
 #'  
-#' # Example 4: now run the same GLM but with interaction between BMI and HDL 
-#'  mod <- ds.glm(formula='D$DIS_DIAB~D$PM_BMI_CONTINUOUS*D$LAB_HDL+D$GENDER',family='binomial')
+#' # Example 4: fit a GLM with an offset parameter: here use continuous BMI as offset parameter
+#'  mod <- ds.glm(formula='LAB_HDL~GENDER', offset="PM_BMI_CONTINUOUS", data="D", family='gaussian')
+#'
+#' # Example 5: fit a GLM with an offset parameter: here use continuous BMI values as weigths
+#'  mod <- ds.glm(formula='LAB_HDL~GENDER', weights="PM_BMI_CONTINUOUS", data="D", family='gaussian')
 #' }
 #'
-ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE, offset=NULL, datasources=NULL) {
+ds.glm <- function(formula=NULL, family=NULL, offset=NULL, weights=NULL, data=NULL, checks=TRUE, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
-  # if no opal login details were provided look for 'opal' objects in the environment
+  # if no opal login details are provided look for 'opal' objects in the environment
   if(is.null(datasources)){
-    findLogin <- getOpals()
-    if(findLogin$flag == 1){
-      datasources <- findLogin$opals
-    }else{
-      if(findLogin$flag == 0){
-        stop(" Are yout logged in to any server? Please provide a valid opal login object! ", call.=FALSE)
-      }else{
-        message(paste0("More than one list of opal login object were found: '", paste(findLogin$opals,collapse="', '"), "'!"))
-        userInput <- readline("Please enter the name of the login object you want to use: ")
-        datasources <- eval(parse(text=userInput))
-        if(class(datasources[[1]]) != 'opal'){
-          stop("End of process: you failed to enter a valid login object", call.=FALSE)
-        }
-      }
+    datasources <- findLoginObjects()
+  }
+  
+  inFormula <- formula
+  
+  #### beginning of checks - the process stops if any of these checks fails ####
+  if(checks){
+    message("Please wait while important checks are carried out!")
+    
+    # verify that 'formula' was set
+    if(is.null(formula)){
+      stop(" Please provide a valid regression formula!", call.=FALSE)
     }
-  }
-  
-  if(is.null(formula)){
-    stop(" Please provide a valid regression formula!", call.=FALSE)
+    
+    # check that 'family' was set
+    if(is.null(family)){
+      stop(" Please provide a valid 'family' argument!", call.=FALSE)
+    }
+    
+    # if the argument 'data' is set, check that the data frame is defined (i.e. exists) on the server site
+    if(!(is.null(data))){
+      defined <- isDefined(datasources, data)
+    }
+    
+    message(" - Verifying variables in the model are defined and not missing at complete...")
+    
+    # if 'offset' is set check that it is defined and that the vector is a numeric and not missing at complete
+    if(!(is.null(offset))){
+      myterms <- unlist(strsplit(offset, split='$', fixed=TRUE))
+      if(length(myterms) == 1){
+        if(!(is.null(data))){
+          defined <- isDefined(datasources, paste0(data, "$", offset))
+          typ <- checkClass(datasources, paste0(data, "$", offset))
+          call <- paste0("isNaDS(", paste0(data, "$", offset), ")")
+        }else{
+          defined <- isDefined(datasources, offset)
+          typ <- checkClass(datasources, offset)
+          call <- paste0("isNaDS(", offset, ")")
+        }
+      }else{
+        defined <- isDefined(datasources, offset)
+        typ <- checkClass(datasources, offset)
+        call <- paste0("isNaDS(", offset, ")")
+      }
+      if(typ != 'numeric'){
+        stop("'offset' must be a numeric vector!", call.=FALSE)
+      }
+      out <- unlist(datashield.aggregate(datasources, as.symbol(call)))
+      idx <- which(out == TRUE)
+      if(length(idx) > 0){ 
+        stop(paste0("The variable ", offset, " is missing at complete (all values are 'NA') in ", paste(stdnames[idx], collapse=", ")), call.=FALSE)
+      }    
+    }
+    
+    # if the argument 'weights' is set check that the vector is a numeric with no negative values
+    if(!(is.null(weights))){
+      myterms <- unlist(strsplit(weights, split='$', fixed=TRUE))
+      if(length(myterms) == 1){
+        if(!(is.null(data))){
+          defined <- isDefined(datasources, paste0(data, "$", weights))
+          typ <- checkClass(datasources, paste0(data, "$", weights))
+          call <- paste0("checkNegValueDS(", paste0(data, "$", weights), ")")
+        }else{
+          defined <- isDefined(datasources, weights)
+          typ <- checkClass(datasources, weights)
+          call <- paste0("checkNegValueDS(", weights, ")")
+        }
+      }else{
+        defined <- isDefined(datasources, weights)
+        typ <- checkClass(datasources, weights)
+        call <- paste0("checkNegValueDS(", weights, ")")
+      }
+      if(typ != 'numeric'){
+        stop("'weights' must be a numeric vector!", call.=FALSE)
+      }
+      checkres <- unlist(datashield.aggregate(datasources, as.symbol(call)))
+      idx <- which(checkres == TRUE)
+      if(length(idx) > 0){
+        stop(paste0("Negative weights not allowed - check study(ies) ", paste(names(datasources)[idx], collapse=", "), "!"), call.=FALSE)
+      }   
+    }
+    
+    # call the function that checks the variables in the formula are defined (exist) on the server site and are not missing at complete
+    glmhelper1(formula, data, datasources)
+    
+    
+    #### end of checks ####    
   }else{
-    formula <- as.formula(formula)
+    message("WARNING:'checks' is set to FALSE; variables in the model are not checked and error messages may not be intelligible!")
   }
-  
-  if(is.null(family)){
-    stop(" Please provide a valid 'family' argument!", call.=FALSE)
-  }
-  
-  # call the helper function that extracts the outcome and covariates 
-  # from the regression formula as objects; these objects are required 
-  # by the function that carries out the preliminary checks
-  vars2check <-  glmhelper2(formula)
-  
-  # call the function that checks the variables are available and not empty
-  #datasources <- ds.checkvar(datasources, vars2check)
+
   
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
@@ -122,7 +191,10 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     }
     
     # call the server site function
-    cally <- call('glmDS', formula, as.symbol(family), beta.vect.temp, offset)
+    # we need to first re-write the formula to allow it to pass the opal filter as a character and reconstruct it on the server side
+    formula <- gsub("~", "TILDA", formula, fixed=TRUE)
+    formula <- gsub("*", "ASTERIX", formula, fixed=TRUE)  
+    cally <- call('glmDSS', formula, as.symbol(family), beta.vect.temp, offset, weights, data)
     study.summary <- datashield.aggregate(datasources, cally)
     
     .select <- function(l, field) {
@@ -288,9 +360,15 @@ ds.glm <- function(formula=NULL, family=NULL, maxit=15, CI=0.95, viewIter=FALSE,
     }
     
     model.parameters<-cbind(model.parameters,ci.mat)
+    if(is.null(offset)){
+      outFormula <- as.formula(inFormula)
+    }else{
+      outFormula <- paste0(inFormula, "+offset(", offset, ")")
+      formula <- as.formula(outFormula)
+    }
     
     glmds <- list(
-      formula=formula,
+      formula=outFormula,
       coefficients=model.parameters,
       dev=dev.total,
       nsubs=nsubs.total,

@@ -1,23 +1,29 @@
 \name{glmhelper1}
 \alias{glmhelper1}
-\title{Extracts the elements of an expression of type call}
+\title{Checks if the elements in a regression formula are defined and not empty}
 \usage{
-glmhelper1(input)
+glmhelper1(input, data, datasources)
 }
 \arguments{
-  \item{input}{a call of the form 'x1+x2+...' or
-  'x1*x2*...', typically this is the rightern side of a
-  regression formula (i.e. the linear predictor) with the
-  intercept.}
+  \item{input}{a character, a regression formula given as a
+  string character}
+
+  \item{data}{a character, the name of an optional data
+  frame containing the variables in in the \code{formula}.}
+
+  \item{datasources}{a list of opal object(s) obtained
+  after login in to opal servers; these objects hold also
+  the data assign to R, as \code{dataframe}, from opal
+  datasources.}
 }
 \value{
-a list which contains the individual elements of the input
-expression
+an integer 0 if check was passed and 1 if failed
 }
 \description{
 This is an internal function required by the client
-function \code{ds.glm} to extract variables from a
-regression formula
+function \code{ds.glm} to ensure all the variable in the LP
+are defined and not empty, i.e. are not missing at
+complete.
 }
 \details{
 

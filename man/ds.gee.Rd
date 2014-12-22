@@ -2,12 +2,12 @@
 \alias{ds.gee}
 \title{Fits a Generalized Estimating Equation (GEE) model}
 \usage{
-ds.gee(x = NULL, formula = NULL, family = NULL, corStructure = "ar1",
+ds.gee(data = NULL, formula = NULL, family = NULL, corStructure = "ar1",
   clusterID = NULL, startCoeff = NULL, userMatrix = NULL, maxit = 20,
   display = FALSE, datasources = NULL)
 }
 \arguments{
-  \item{x}{the name of the data frame that hold the
+  \item{data}{the name of the data frame that hold the
   variables in the regression formula.}
 
   \item{formula}{a string character, the formula which
@@ -82,7 +82,7 @@ through the data.frame.
   mycorr <- 'ar1'
 
   # run a GEE analysis with the above specifed parameters
-  xx <- ds.gee(x='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
+  xx <- ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
 
 # clear the Datashield R sessions and logout
 datashield.logout(opals)
