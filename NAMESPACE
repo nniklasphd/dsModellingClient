@@ -1,2 +1,3 @@
 export(ds.gee)
 export(ds.glm)
+export(ds.lexus)

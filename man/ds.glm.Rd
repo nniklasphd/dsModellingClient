@@ -2,9 +2,9 @@
 \alias{ds.glm}
 \title{Runs a combined GLM analysis of non-pooled data}
 \usage{
-ds.glm(formula = NULL, family = NULL, offset = NULL, weights = NULL,
-  data = NULL, checks = TRUE, maxit = 15, CI = 0.95, viewIter = FALSE,
-  datasources = NULL)
+ds.glm(formula = NULL, data = NULL, family = NULL, offset = NULL,
+  weights = NULL, checks = TRUE, maxit = 15, CI = 0.95,
+  viewIter = FALSE, datasources = NULL)
 }
 \arguments{
   \item{formula}{a character, a formula which describes the
@@ -17,9 +17,9 @@ ds.glm(formula = NULL, family = NULL, offset = NULL, weights = NULL,
   to specify an a priori known component to be included in
   the linear predictor during fitting.}
 
-  \item{weights}{an optional vector of 'prior weights' to
-  be used in the fitting process. Should be NULL or a
-  numeric vector.}
+  \item{offset}{a character, null or a numeric vector that
+  can be used to specify an a priori known component to be
+  included in the linear predictor during fitting.}
 
   \item{data}{a character, the name of an optional data
   frame containing the variables in in the \code{formula}.
@@ -102,10 +102,13 @@ mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL+GENDER', data='D', fam
  mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL*GENDER', data='D', family='binomial')
 
 # Example 4: fit a GLM with an offset parameter: here use continuous BMI as offset parameter
- mod <- ds.glm(formula='LAB_HDL~GENDER', offset="PM_BMI_CONTINUOUS", data="D", family='gaussian')
+ mod <- ds.glm(formula='LAB_HDL~GENDER', data="D", family='gaussian', offset="PM_BMI_CONTINUOUS")
 
 # Example 5: fit a GLM with an offset parameter: here use continuous BMI values as weigths
- mod <- ds.glm(formula='LAB_HDL~GENDER', weights="PM_BMI_CONTINUOUS", data="D", family='gaussian')
+ mod <- ds.glm(formula='LAB_HDL~GENDER', data="D", family='gaussian', weights="PM_BMI_CONTINUOUS")
+
+# clear the Datashield R sessions and logout
+datashield.logout(opals)
 }
 }
 \author{

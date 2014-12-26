@@ -3,7 +3,7 @@
 #' @description This is an internal function required by the client
 #' function \code{ds.glm} to ensure all the variable in the LP are defined and not empty,
 #' i.e. are not missing at complete.
-#' @param input a character, a regression formula given as a string character
+#' @param formula a character, a regression formula given as a string character
 #' @param data a character, the name of an optional data frame containing the variables in 
 #' in the \code{formula}.
 #' @param datasources a list of opal object(s) obtained after login in to opal servers;
@@ -12,21 +12,25 @@
 #' @return an integer 0 if check was passed and 1 if failed
 #' @author Gaye, A.
 #' 
-glmhelper1 <- function(input, data, datasources){
+glmhelper1 <- function(formula, data, datasources){
+  
+  # turn the formula into a character
+  formula <- paste0(Reduce(paste, deparse(formula)))
   
   # replace the symbols '~', '+' and '*' by a separator
-  input <- gsub( " ", "", input, fixed=TRUE)
-  input <- gsub( "~", "|", input, fixed=TRUE)
-  input <- gsub( "+", "|", input, fixed=TRUE)
-  input <- gsub( "*", "|", input, fixed=TRUE)
+  formula <- gsub( " ", "", formula, fixed=TRUE)
+  formula <- gsub( "~", "|", formula, fixed=TRUE)
+  formula <- gsub( "+", "|", formula, fixed=TRUE)
+  formula <- gsub( "*", "|", formula, fixed=TRUE)
   
   # split the input formula by "|" to obtain the names of the variables
-  elts <- unlist(strsplit(input, split="|", fixed=TRUE))
+  elts <- unlist(strsplit(formula, split="|", fixed=TRUE))
   
   # check that each variable is defined and not empty and each study. Stop the process if any check fails
   stdnames <- names(datasources)
   for(i in 1:length(elts)){
-    if(is.na(as.numeric(elts[1], options(warn=-1)))){ # making sure an eventual intercept term is not included in the checks
+    if(is.na(as.numeric(elts[i], options(warn=-1)))){ # making sure an eventual intercept term is not included in the checks
+      message(paste0("    ", elts[i], "..."))
       for(j in 1: length(datasources)){
         
         # check if the variable is defined on the server site

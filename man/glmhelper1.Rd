@@ -2,11 +2,11 @@
 \alias{glmhelper1}
 \title{Checks if the elements in a regression formula are defined and not empty}
 \usage{
-glmhelper1(input, data, datasources)
+glmhelper1(formula, data, datasources)
 }
 \arguments{
-  \item{input}{a character, a regression formula given as a
-  string character}
+  \item{formula}{a character, a regression formula given as
+  a string character}
 
   \item{data}{a character, the name of an optional data
   frame containing the variables in in the \code{formula}.}

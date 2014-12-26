@@ -7,8 +7,8 @@
 #' @param family a description of the error distribution function to use in the model
 #' @param offset  null or a numreric vector that can be used to specify an a priori known component to be 
 #' included in the linear predictor during fitting.
-#' @param weights  an optional vector of 'prior weights' to be used in the fitting process. Should be NULL 
-#' or a numeric vector.
+#' @param offset  a character, null or a numeric vector that can be used to specify an a priori known component 
+#' to be included in the linear predictor during fitting.
 #' @param data a character, the name of an optional data frame containing the variables in 
 #' in the \code{formula}. The process stops if a non existing data frame is indicated. 
 #' @param checks a boolean, if TRUE (default) checks that takes 1-3min are carried out to verify that the 
@@ -56,41 +56,43 @@
 #'  mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL*GENDER', data='D', family='binomial')
 #'  
 #' # Example 4: fit a GLM with an offset parameter: here use continuous BMI as offset parameter
-#'  mod <- ds.glm(formula='LAB_HDL~GENDER', offset="PM_BMI_CONTINUOUS", data="D", family='gaussian')
+#'  mod <- ds.glm(formula='LAB_HDL~GENDER', data="D", family='gaussian', offset="PM_BMI_CONTINUOUS")
 #'
 #' # Example 5: fit a GLM with an offset parameter: here use continuous BMI values as weigths
-#'  mod <- ds.glm(formula='LAB_HDL~GENDER', weights="PM_BMI_CONTINUOUS", data="D", family='gaussian')
+#'  mod <- ds.glm(formula='LAB_HDL~GENDER', data="D", family='gaussian', weights="PM_BMI_CONTINUOUS")
+#'  
+#' # clear the Datashield R sessions and logout
+#' datashield.logout(opals) 
 #' }
 #'
-ds.glm <- function(formula=NULL, family=NULL, offset=NULL, weights=NULL, data=NULL, checks=TRUE, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
+ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=TRUE, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
   # if no opal login details are provided look for 'opal' objects in the environment
   if(is.null(datasources)){
     datasources <- findLoginObjects()
   }
   
-  inFormula <- formula
+  # verify that 'formula' was set
+  if(is.null(formula)){
+    stop(" Please provide a valid regression formula!", call.=FALSE)
+  }else{
+    formula <- as.formula(formula)
+  }
+  
+  # check that 'family' was set
+  if(is.null(family)){
+    stop(" Please provide a valid 'family' argument!", call.=FALSE)
+  }
+  
+  # if the argument 'data' is set, check that the data frame is defined (i.e. exists) on the server site
+  if(!(is.null(data))){
+    defined <- isDefined(datasources, data)
+  }
   
   #### beginning of checks - the process stops if any of these checks fails ####
   if(checks){
-    message("Please wait while important checks are carried out!")
-    
-    # verify that 'formula' was set
-    if(is.null(formula)){
-      stop(" Please provide a valid regression formula!", call.=FALSE)
-    }
-    
-    # check that 'family' was set
-    if(is.null(family)){
-      stop(" Please provide a valid 'family' argument!", call.=FALSE)
-    }
-    
-    # if the argument 'data' is set, check that the data frame is defined (i.e. exists) on the server site
-    if(!(is.null(data))){
-      defined <- isDefined(datasources, data)
-    }
-    
-    message(" - Verifying variables in the model are defined and not missing at complete...")
+    message("Please wait while important checks are carried out!")    
+    message(" -- Verifying variables in the model are defined and not missing at complete")
     
     # if 'offset' is set check that it is defined and that the vector is a numeric and not missing at complete
     if(!(is.null(offset))){
@@ -98,8 +100,16 @@ ds.glm <- function(formula=NULL, family=NULL, offset=NULL, weights=NULL, data=NU
       if(length(myterms) == 1){
         if(!(is.null(data))){
           defined <- isDefined(datasources, paste0(data, "$", offset))
-          typ <- checkClass(datasources, paste0(data, "$", offset))
-          call <- paste0("isNaDS(", paste0(data, "$", offset), ")")
+          mycall <- paste0("colnames(", data, ")")
+          cols <- unique(unlist(datashield.aggregate(datasources, as.symbol(mycall))))
+          if(offset %in% cols){
+            typ <- checkClass(datasources, paste0(data, "$", offset))
+            call <- paste0("isNaDS(", paste0(data, "$", offset), ")")
+          }else{
+            defined <- isDefined(datasources, offset)
+            typ <- checkClass(datasources, offset)
+            call <- paste0("isNaDS(", offset, ")")            
+          }
         }else{
           defined <- isDefined(datasources, offset)
           typ <- checkClass(datasources, offset)
@@ -151,12 +161,10 @@ ds.glm <- function(formula=NULL, family=NULL, offset=NULL, weights=NULL, data=NU
     # call the function that checks the variables in the formula are defined (exist) on the server site and are not missing at complete
     glmhelper1(formula, data, datasources)
     
-    
     #### end of checks ####    
   }else{
     message("WARNING:'checks' is set to FALSE; variables in the model are not checked and error messages may not be intelligible!")
   }
-
   
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
@@ -190,11 +198,7 @@ ds.glm <- function(formula=NULL, family=NULL, offset=NULL, weights=NULL, data=NU
       beta.vect.temp <- paste0(beta.vect.next, collapse=",")
     }
     
-    # call the server site function
-    # we need to first re-write the formula to allow it to pass the opal filter as a character and reconstruct it on the server side
-    formula <- gsub("~", "TILDA", formula, fixed=TRUE)
-    formula <- gsub("*", "ASTERIX", formula, fixed=TRUE)  
-    cally <- call('glmDSS', formula, as.symbol(family), beta.vect.temp, offset, weights, data)
+    cally <- call('glmDS', formula, family, beta.vect.temp, offset, weights, data)
     study.summary <- datashield.aggregate(datasources, cally)
     
     .select <- function(l, field) {
@@ -263,7 +267,6 @@ ds.glm <- function(formula=NULL, family=NULL, offset=NULL, weights=NULL, data=NU
     
     message("\nCurrent deviance: ", dev.total, "\n")
   }
-  
   
   #If convergence has been obtained, declare final (maximum likelihood) beta vector,
   #and calculate the corresponding standard errors, z scores and p values
@@ -360,15 +363,15 @@ ds.glm <- function(formula=NULL, family=NULL, offset=NULL, weights=NULL, data=NU
     }
     
     model.parameters<-cbind(model.parameters,ci.mat)
+    
     if(is.null(offset)){
-      outFormula <- as.formula(inFormula)
+      formula <- Reduce(paste, deparse(formula))
     }else{
-      outFormula <- paste0(inFormula, "+offset(", offset, ")")
-      formula <- as.formula(outFormula)
+      paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"))
     }
     
     glmds <- list(
-      formula=outFormula,
+      formula=formula,
       coefficients=model.parameters,
       dev=dev.total,
       nsubs=nsubs.total,

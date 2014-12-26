@@ -8,7 +8,7 @@
 #' The entry and exit times in the input table are used to compute the total survival time. 
 #' By default all the covariates in the input table are included in the expanded output table but it is 
 #' preferable to indicate the names of the covariates to be included via the argument 'variables'.
-#' @param x a character, the name of the table that holds the original data, this is the data to be expanded.
+#' @param data a character, the name of the table that holds the original data, this is the data to be expanded.
 #' @param intervalWidth, a numeric vector which gives the chosen width of the intervals ('pieces'). 
 #' This can be one value (in which case all the intervals have same width) or several different values.
 #' If no value(s) are provided a single default value is used. That default value is the set to be the 
@@ -31,31 +31,59 @@
 #' @param datasources a list of opal object(s) obtained after login to opal servers;
 #' these objects also hold the data assigned to R, as a \code{data frame}, from opal datasources
 #' @return a dataframe, an expanded version of the input table.
-#' @author Gaye, A.; Burton, P.
+#' @author Gaye, A.
+#' @export
+#' @examples {
 #' 
-ds.lexus <- function(x=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){
+#'   # load the file that contains the login details
+#'   data(survival_logindata)
+#' 
+#'   # login and assign all the variables to R
+#'   opals <- datashield.login(logins=survival_logindata,assign=TRUE)
+#' 
+#'   # this example shows how to run survival analysis in H-DataSHIELD using the 'piecewise exponential regression' method
+#' 
+#'   # let us display the names of the variables in the original table (the table we assigned above and which by default is named 'D')
+#'   ds.colnames('D')
+#' 
+#'   # specify some baseline hazard profile (i.e. the width of the intervals to be used)
+#'   bh <- c(2,1,3,0.5,1.5,2)
+#' 
+#'   # expand the original table (e.g the survial time of each individual is split into 'pieces' equal to the intervals specified above
+#'   # we use the function 'ds.lexus' which expands the original table and saves the expanded table on the server site.
+#'   # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
+#'   # to indicate the variables to include if you have many variables and wants to use only a subset of those.
+#'   ds.lexus(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
+#' 
+#'   # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
+#'   ds.colnames('D_expanded')
+#'
+#'   # Now fit a GLM with a poisson model
+#'   # there is a direct relationship between the poisson model with a log-time offset and the exponential model so we can 
+#'   # use glm to fit a poisson model and include a factor for the time intervals ('TIMEID') to have different rates.
+#'   # The vector 'SURVIVALTIME' (the time elapsed between start of follow up failure/censoring) and the vector 'TIMEID' 
+#'   # which allows for different rates are generated when the initial table got expanded via the function 'ds.lxus'. 
+#'   In the below model the log of the survival time is used as an offset (some known information to be included in the model).
+#'   
+#'   # generate a vector of log survival time values
+#'   ds.assign(toAssign='log(D_expanded$SURVIVALTIME)', newobj='logSurvival')
+#'   
+#'   # Fit the GLM - the outcome is failure status
+#'   mod <- ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
+#'  
+#' # clear the Datashield R sessions and logout
+#' datashield.logout(opals) 
+#' }
+#'
+ds.lexus <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){
   
-  # if no opal login details were provided look for 'opal' objects in the environment
+  # if no opal login details are provided look for 'opal' objects in the environment
   if(is.null(datasources)){
-    findLogin <- getOpals()
-    if(findLogin$flag == 1){
-      datasources <- findLogin$opals
-    }else{
-      if(findLogin$flag == 0){
-        stop(" Are yout logged in to any server? Please provide a valid opal login object! ", call.=FALSE)
-      }else{
-        message(paste0("More than one list of opal login object were found: '", paste(findLogin$opals,collapse="', '"), "'!"))
-        userInput <- readline("Please enter the name of the login object you want to use: ")
-        datasources <- eval(parse(text=userInput))
-        if(class(datasources[[1]]) != 'opal'){
-          stop("End of process: you failed to enter a valid login object", call.=FALSE)
-        }
-      }
-    }
+    datasources <- findLoginObjects()
   }
   
   # check if user have provided a the name of the input dataset
-  if(is.null(x)){
+  if(is.null(data)){
     stop("Please provide the name of the dataset to expand!", call.=FALSE)
   }
   
@@ -74,17 +102,17 @@ ds.lexus <- function(x=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exit
     stop("Please provide the name of the column that holds the exit times (i.e. end of follow up time)!", call.=FALSE)
   }
   
-  # if no value provided for 'intervalWidth) generate one
+  # if no value provided for 'intervalWidth' generate one
   if(is.null(intervalWidth)){
-    intervalWidth <- lexusHelper1(datasources, paste0(x,"$",exitCol))
+    intervalWidth <- lexusHelper1(datasources, paste0(data,"$",exitCol))
   }
   
   if(is.null(newobj)){
-    newobj <- paste0(x,"_expanded")
+    newobj <- paste0(data,"_expanded")
   }
   
   # call the server side function
-  cally <- call("lexusDS", x, intervalWidth, idCol, entryCol, exitCol, statusCol, variables)
+  cally <- call("lexusDS", data, intervalWidth, idCol, entryCol, exitCol, statusCol, variables)
   datashield.assign(datasources, newobj, cally)
   
   # check that the new object has been created if and display a message accordingly

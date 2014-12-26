@@ -57,23 +57,9 @@ ds.gee <- function(data=NULL, formula=NULL, family=NULL, corStructure='ar1', clu
   # turn the input formula into an object of type 'formula', it is given as a string character
   formula <- as.formula(formula)
   
-  # if no opal login details were provided look for 'opal' objects in the environment
+  # if no opal login details are provided look for 'opal' objects in the environment
   if(is.null(datasources)){
-    findLogin <- getOpals()
-    if(findLogin$flag == 1){
-      datasources <- findLogin$opals
-    }else{
-      if(findLogin$flag == 0){
-        stop(" Are yout logged in to any server? Please provide a valid opal login object! ", call.=FALSE)
-      }else{
-        message(paste0("More than one list of opal login object were found: '", paste(findLogin$opals,collapse="', '"), "'!"))
-        userInput <- readline("Please enter the name of the login object you want to use: ")
-        datasources <- eval(parse(text=userInput))
-        if(class(datasources[[1]]) != 'opal'){
-          stop("End of process: you failed to enter a valid login object", call.=FALSE)
-        }
-      }
-    }
+    datasources <- findLoginObjects()
   }
   
   # check if user have provided the name of the dataset and if the dataset is defined
@@ -130,28 +116,36 @@ ds.gee <- function(data=NULL, formula=NULL, family=NULL, corStructure='ar1', clu
   cally <- call('complete.cases', as.symbol(data))
   datashield.assign(datasources, 'Dcomplete', cally)
   
+  # get names of the studies 
   stdnames <- names(datasources)
-  temp <- glmhelper2(formula)
-  variables <- c()
-  for(i in 1:length(temp)){
-    variables <- append(variables, temp[[i]])
-  }
-  colsD <- datashield.aggregate(datasources, paste0("colnames(", x, ")"))[[1]]
+  
+  # get the names of the variables in the model
+  formulatext <- paste0(Reduce(paste, deparse(formula)))
+  formulatext <- gsub( " ", "", formulatext, fixed=TRUE)
+  formulatext <- gsub( "~", "|", formulatext, fixed=TRUE)
+  formulatext <- gsub( "+", "|", formulatext, fixed=TRUE)
+  formulatext <- gsub( "*", "|", formulatext, fixed=TRUE)
+  variables <- unlist(strsplit(formulatext, split="|", fixed=TRUE))
+
+  # checks
+  colsD <- datashield.aggregate(datasources, paste0("colnames(", data, ")"))[[1]]
   for(i in 1:length(variables)){
-    for(j in 1: length(datasources)){
-      lengthDcomplete <- datashield.aggregate(datasources[j],paste0("length(Dcomplete)"))[[1]]
-      nrowD <- datashield.aggregate(datasources[j], paste0("dim(", data, ")"))[[1]][1]
-      if(lengthDcomplete != nrowD){
-        stop("The input dataset ", data,  " in ", stdnames[j] , " contains one or more missing values. Only complete datasets are allowed in GEE analysis.", call.=FALSE)
-      }else{
-        inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
-        if(length(inputterms) > 1){
-          if(!(inputerms[2] %in% colsD)){
-            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
-          }
+    if(is.na(as.numeric(variables[i], options(warn=-1)))){
+      for(j in 1: length(datasources)){
+        lengthDcomplete <- datashield.aggregate(datasources[j],paste0("length(Dcomplete)"))[[1]]
+        nrowD <- datashield.aggregate(datasources[j], paste0("dim(", data, ")"))[[1]][1]
+        if(lengthDcomplete != nrowD){
+          stop("The input dataset ", data,  " in ", stdnames[j] , " contains one or more missing values. Only complete datasets are allowed in GEE analysis.", call.=FALSE)
         }else{
-          if(!(as.character(variables[[i]]) %in% colsD)){
-            stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
+          inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
+          if(length(inputterms) > 1){
+            if(!(inputerms[2] %in% colsD)){
+              stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
+            }
+          }else{
+            if(!(as.character(variables[[i]]) %in% colsD)){
+              stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
+            }
           }
         }
       }
@@ -244,5 +238,5 @@ ds.gee <- function(data=NULL, formula=NULL, family=NULL, corStructure='ar1', clu
   colnames(mainOutput) <- c("coefficients", "standard.errors")
   rownames(mainOutput) <- rownames(betaValues)
   
-  return(list(estimates=mainOutput, alpha=round(alpha.comb,3), phi=round(phi.comb,3)))
+  return(list(formula=formula, estimates=mainOutput, alpha=round(alpha.comb,3), phi=round(phi.comb,3)))
 }

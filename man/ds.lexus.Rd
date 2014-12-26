@@ -2,12 +2,12 @@
 \alias{ds.lexus}
 \title{Generates an expanded version of a dataset that contains survival data}
 \usage{
-ds.lexus(x = NULL, intervalWidth = NULL, idCol = NULL, entryCol = NULL,
-  exitCol = NULL, statusCol = NULL, variables = NULL, newobj = NULL,
-  datasources = NULL)
+ds.lexus(data = NULL, intervalWidth = NULL, idCol = NULL,
+  entryCol = NULL, exitCol = NULL, statusCol = NULL, variables = NULL,
+  newobj = NULL, datasources = NULL)
 }
 \arguments{
-  \item{x}{a character, the name of the table that holds
+  \item{data}{a character, the name of the table that holds
   the original data, this is the data to be expanded.}
 
   \item{intervalWidth,}{a numeric vector which gives the
@@ -78,7 +78,50 @@ covariates in the input table are included in the expanded
 output table but it is preferable to indicate the names of
 the covariates to be included via the argument 'variables'.
 }
+\examples{
+{
+
+  # load the file that contains the login details
+  data(survival_logindata)
+
+  # login and assign all the variables to R
+  opals <- datashield.login(logins=survival_logindata,assign=TRUE)
+
+  # this example shows how to run survival analysis in H-DataSHIELD using the 'piecewise exponential regression' method
+
+  # let us display the names of the variables in the original table (the table we assigned above and which by default is named 'D')
+  ds.colnames('D')
+
+  # specify some baseline hazard profile (i.e. the width of the intervals to be used)
+  bh <- c(2,1,3,0.5,1.5,2)
+
+  # expand the original table (e.g the survial time of each individual is split into 'pieces' equal to the intervals specified above
+  # we use the function 'ds.lexus' which expands the original table and saves the expanded table on the server site.
+  # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
+  # to indicate the variables to include if you have many variables and wants to use only a subset of those.
+  ds.lexus(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
+
+  # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
+  ds.colnames('D_expanded')
+
+  # Now fit a GLM with a poisson model
+  # there is a direct relationship between the poisson model with a log-time offset and the exponential model so we can
+  # use glm to fit a poisson model and include a factor for the time intervals ('TIMEID') to have different rates.
+  # The vector 'SURVIVALTIME' (the time elapsed between start of follow up failure/censoring) and the vector 'TIMEID'
+  # which allows for different rates are generated when the initial table got expanded via the function 'ds.lxus'.
+  In the below model the log of the survival time is used as an offset (some known information to be included in the model).
+
+  # generate a vector of log survival time values
+  ds.assign(toAssign='log(D_expanded$SURVIVALTIME)', newobj='logSurvival')
+
+  # Fit the GLM - the outcome is failure status
+  mod <- ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
+
+# clear the Datashield R sessions and logout
+datashield.logout(opals)
+}
+}
 \author{
-Gaye, A.; Burton, P.
+Gaye, A.
 }
 
