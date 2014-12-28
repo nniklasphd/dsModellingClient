@@ -1,16 +1,16 @@
-\name{logindata}
+\name{geeLogin_remoteServer}
 
-\alias{logindata}
+\alias{geeLogin_remoteServer}
 
 \docType{data}
 
-\title{Information required to login to opal servers for the GLM test data}
+\title{Information required to login to opal servers for the GEE test data}
 
 \description{
     A table of with 5 columns: study name, URL, username, password and opal datasource.
 }
 
-\usage{data(logindata)}
+\usage{data(geeLogin_remoteServer)}
 
 \format{
   A data frame where the number of servers corresponds to the number of rows
@@ -26,4 +26,4 @@
   }
 }
 
-\examples{data(logindata)}
+\examples{data(geeLogin_remoteServer)}

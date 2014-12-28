@@ -1,12 +1,11 @@
-\name{glmhelper1}
-\alias{glmhelper1}
+\name{geeChecks}
+\alias{geeChecks}
 \title{Checks if the elements in a regression formula are defined and not empty}
 \usage{
-glmhelper1(formula, data, datasources)
+geeChecks(formula, data, datasources)
 }
 \arguments{
-  \item{formula}{a character, a regression formula given as
-  a string character}
+  \item{formula}{an object of type formula, the lp formula}
 
   \item{data}{a character, the name of an optional data
   frame containing the variables in in the \code{formula}.}

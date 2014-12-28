@@ -5,10 +5,10 @@
 #' on distinct servers by sending 
 #' @param formula a character, a formula which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
-#' @param offset  null or a numreric vector that can be used to specify an a priori known component to be 
-#' included in the linear predictor during fitting.
 #' @param offset  a character, null or a numeric vector that can be used to specify an a priori known component 
 #' to be included in the linear predictor during fitting.
+#' @param weights  a character, the name of an optional vector of 'prior weights' to be used in the fitting 
+#' process. Should be NULL or a numeric vector.
 #' @param data a character, the name of an optional data frame containing the variables in 
 #' in the \code{formula}. The process stops if a non existing data frame is indicated. 
 #' @param checks a boolean, if TRUE (default) checks that takes 1-3min are carried out to verify that the 
@@ -36,15 +36,16 @@
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
 #' @author Burton,P;Gaye,A;Laflamme,P
+#' @seealso \code{ds.lexus} for 'ds.glm' in survival analysis using piecewise exponential regression
 #' @export
 #' @examples {
 #' 
 #' # load the file that contains the login details
-#' data(logindata)
+#' data(glmLoginData)
 #' 
 #' # login and assign some variables to R
 #' myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
-#' opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
+#' opals <- datashield.login(logins=glmLoginData,assign=TRUE,variables=myvar)
 #' 
 #' # Example 1: fit a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
 #' mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL+GENDER', data='D', family='binomial')
@@ -89,79 +90,11 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NU
     defined <- isDefined(datasources, data)
   }
   
-  #### beginning of checks - the process stops if any of these checks fails ####
+  # beginning of checks - the process stops if any of these checks fails #
   if(checks){
-    message("Please wait while important checks are carried out!")    
-    message(" -- Verifying variables in the model are defined and not missing at complete")
-    
-    # if 'offset' is set check that it is defined and that the vector is a numeric and not missing at complete
-    if(!(is.null(offset))){
-      myterms <- unlist(strsplit(offset, split='$', fixed=TRUE))
-      if(length(myterms) == 1){
-        if(!(is.null(data))){
-          defined <- isDefined(datasources, paste0(data, "$", offset))
-          mycall <- paste0("colnames(", data, ")")
-          cols <- unique(unlist(datashield.aggregate(datasources, as.symbol(mycall))))
-          if(offset %in% cols){
-            typ <- checkClass(datasources, paste0(data, "$", offset))
-            call <- paste0("isNaDS(", paste0(data, "$", offset), ")")
-          }else{
-            defined <- isDefined(datasources, offset)
-            typ <- checkClass(datasources, offset)
-            call <- paste0("isNaDS(", offset, ")")            
-          }
-        }else{
-          defined <- isDefined(datasources, offset)
-          typ <- checkClass(datasources, offset)
-          call <- paste0("isNaDS(", offset, ")")
-        }
-      }else{
-        defined <- isDefined(datasources, offset)
-        typ <- checkClass(datasources, offset)
-        call <- paste0("isNaDS(", offset, ")")
-      }
-      if(typ != 'numeric'){
-        stop("'offset' must be a numeric vector!", call.=FALSE)
-      }
-      out <- unlist(datashield.aggregate(datasources, as.symbol(call)))
-      idx <- which(out == TRUE)
-      if(length(idx) > 0){ 
-        stop(paste0("The variable ", offset, " is missing at complete (all values are 'NA') in ", paste(stdnames[idx], collapse=", ")), call.=FALSE)
-      }    
-    }
-    
-    # if the argument 'weights' is set check that the vector is a numeric with no negative values
-    if(!(is.null(weights))){
-      myterms <- unlist(strsplit(weights, split='$', fixed=TRUE))
-      if(length(myterms) == 1){
-        if(!(is.null(data))){
-          defined <- isDefined(datasources, paste0(data, "$", weights))
-          typ <- checkClass(datasources, paste0(data, "$", weights))
-          call <- paste0("checkNegValueDS(", paste0(data, "$", weights), ")")
-        }else{
-          defined <- isDefined(datasources, weights)
-          typ <- checkClass(datasources, weights)
-          call <- paste0("checkNegValueDS(", weights, ")")
-        }
-      }else{
-        defined <- isDefined(datasources, weights)
-        typ <- checkClass(datasources, weights)
-        call <- paste0("checkNegValueDS(", weights, ")")
-      }
-      if(typ != 'numeric'){
-        stop("'weights' must be a numeric vector!", call.=FALSE)
-      }
-      checkres <- unlist(datashield.aggregate(datasources, as.symbol(call)))
-      idx <- which(checkres == TRUE)
-      if(length(idx) > 0){
-        stop(paste0("Negative weights not allowed - check study(ies) ", paste(names(datasources)[idx], collapse=", "), "!"), call.=FALSE)
-      }   
-    }
-    
+    message(" -- Verifying the variables in the model")
     # call the function that checks the variables in the formula are defined (exist) on the server site and are not missing at complete
-    glmhelper1(formula, data, datasources)
-    
-    #### end of checks ####    
+    glmChecks(formula, data, offset, weights, datasources)
   }else{
     message("WARNING:'checks' is set to FALSE; variables in the model are not checked and error messages may not be intelligible!")
   }

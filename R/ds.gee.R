@@ -7,10 +7,10 @@
 #' then combined and updated coefficients estimate sent back for a new fit. This iterative process 
 #' goes on until convergence is achieved. The input data should not contain missing values.
 #' The data must be in a data.frame obejct and the variables must be refer to through the data.frame.
-#' @param data the name of the data frame that hold the variables in the regression formula.
 #' @param formula a string character, the formula which describes the model to be fitted.
 #' @param family a character, the description of the error distribution:  'binomial', 'gaussian', 
 #' 'Gamma' or 'poisson'.
+#' @param data the name of the data frame that hold the variables in the regression formula.
 #' @param corStructure a character, the correlation structure: 'ar1', 'exchangeable', 'independence', 
 #' 'fixed' or 'unstructure'.
 #' @param clusterID a character, the name of the column that hold the cluster IDs
@@ -18,6 +18,11 @@
 #' @param userMatrix a list of user defined matrix (one for each study). These matrices are 
 #' required if the correlation structure is set to 'fixed'.
 #' @param maxit an integer, the maximum number of iteration to use for convergence.
+#' @param checks a boolean, if TRUE (default) checks that takes 1-3min are carried out to verify that the 
+#' variables in the model are defined (exist) on the server site and that they have the correct characteristics
+#' required to fit a GEE. If FALSE (not recommended if you are not an experienced user) no checks are carried 
+#' except some very basic ones and eventual error messages might not give clear indications about the cause(s)
+#' of the error.
 #' @param display a boolean to display or not the intermediate results. Default is FALSE.
 #' @param datasources a list of opal object(s) obtained after login to opal servers;
 #' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
@@ -30,7 +35,7 @@
 #'   # load the login data file for the correlated data
 #'   data(geeLoginData)
 #'   
-#'   # login and assign all the stored variables
+#'   # login and assign all the stored variables to R
 #'   opals <- datashield.login(logins=geeLoginData,assign=TRUE)
 #'   
 #'   # set some parameters for the function 9the rest are set to default values)
@@ -41,18 +46,18 @@
 #'   mycorr <- 'ar1'
 #'   
 #'   # run a GEE analysis with the above specifed parameters
-#'   xx <- ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
+#'   ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
 #'   
-#' # clear the Datashield R sessions and logout
-#' datashield.logout(opals) 
+#'   # clear the Datashield R sessions and logout
+#'   datashield.logout(opals) 
 #' 
 #' }
 #' 
 #' @references Jones EM, Sheehan NA, Gaye A, Laflamme P, Burton P. Combined analysis of correlated data
 #' when data cannot be pooled. Stat 2013; 2: 72-85.
 #'
-ds.gee <- function(data=NULL, formula=NULL, family=NULL, corStructure='ar1', clusterID=NULL, startCoeff=NULL, userMatrix=NULL, 
-                   maxit=20, display=FALSE, datasources=NULL){
+ds.gee <- function(formula=NULL, family=NULL, data=NULL, corStructure='ar1', clusterID=NULL, startCoeff=NULL, userMatrix=NULL, 
+                   maxit=20, checks=TRUE, display=FALSE, datasources=NULL){
   
   # turn the input formula into an object of type 'formula', it is given as a string character
   formula <- as.formula(formula)
@@ -64,7 +69,7 @@ ds.gee <- function(data=NULL, formula=NULL, family=NULL, corStructure='ar1', clu
   
   # check if user have provided the name of the dataset and if the dataset is defined
   if(is.null(data)){
-    stop("data=NULL; please provide the name of the dataset that holds the variables!", call.=FALSE)
+    stop("data=NULL; please provide the name of the data frame that holds the variables! \nTip: Use function 'ds.cbind' to coerce the variables into a data frame", call.=FALSE)
   }else{
     defined <- isDefined(datasources, data)
   }
@@ -112,44 +117,13 @@ ds.gee <- function(data=NULL, formula=NULL, family=NULL, corStructure='ar1', clu
     stop("Please provide a valid 'family' parameter: 'binomial', 'gaussian', 'Gamma' or 'poisson'.", call.=FALSE)
   }
   
-  # check if the input dataframe is complete and if the variables in the lp formula are in the input dataframe
-  cally <- call('complete.cases', as.symbol(data))
-  datashield.assign(datasources, 'Dcomplete', cally)
-  
-  # get names of the studies 
-  stdnames <- names(datasources)
-  
-  # get the names of the variables in the model
-  formulatext <- paste0(Reduce(paste, deparse(formula)))
-  formulatext <- gsub( " ", "", formulatext, fixed=TRUE)
-  formulatext <- gsub( "~", "|", formulatext, fixed=TRUE)
-  formulatext <- gsub( "+", "|", formulatext, fixed=TRUE)
-  formulatext <- gsub( "*", "|", formulatext, fixed=TRUE)
-  variables <- unlist(strsplit(formulatext, split="|", fixed=TRUE))
-
-  # checks
-  colsD <- datashield.aggregate(datasources, paste0("colnames(", data, ")"))[[1]]
-  for(i in 1:length(variables)){
-    if(is.na(as.numeric(variables[i], options(warn=-1)))){
-      for(j in 1: length(datasources)){
-        lengthDcomplete <- datashield.aggregate(datasources[j],paste0("length(Dcomplete)"))[[1]]
-        nrowD <- datashield.aggregate(datasources[j], paste0("dim(", data, ")"))[[1]][1]
-        if(lengthDcomplete != nrowD){
-          stop("The input dataset ", data,  " in ", stdnames[j] , " contains one or more missing values. Only complete datasets are allowed in GEE analysis.", call.=FALSE)
-        }else{
-          inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
-          if(length(inputterms) > 1){
-            if(!(inputerms[2] %in% colsD)){
-              stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
-            }
-          }else{
-            if(!(as.character(variables[[i]]) %in% colsD)){
-              stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
-            }
-          }
-        }
-      }
-    }
+  # checks - the process stops if any of these checks fails ####
+  if(checks){
+    message(" -- Verifying variables in the model")
+    # call the function that checks the variables in the formula
+    geeChecks(formula, data, datasources)
+  }else{
+    message("WARNING:'checks' is set to FALSE; variables in the model are not checked and error messages may not be intelligible!")
   }
   
   # loop until convergence is achieved or the maximum number of iterations is reached  

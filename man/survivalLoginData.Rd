@@ -1,16 +1,16 @@
-\name{geeLoginData}
+\name{survivalLoginData}
 
-\alias{geeLoginData}
+\alias{survivalLoginData}
 
 \docType{data}
 
-\title{Information required to login to opal servers for the GEE test data}
+\title{Information required to login to opal servers for the GLM test data}
 
 \description{
     A table of with 5 columns: study name, URL, username, password and opal datasource.
 }
 
-\usage{data(logindata)}
+\usage{data(survivalLoginData)}
 
 \format{
   A data frame where the number of servers corresponds to the number of rows
@@ -26,4 +26,4 @@
   }
 }
 
-\examples{data(geeLoginData)}
+\examples{data(survivalLoginData)}

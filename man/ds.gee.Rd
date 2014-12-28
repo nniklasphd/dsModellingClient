@@ -2,20 +2,20 @@
 \alias{ds.gee}
 \title{Fits a Generalized Estimating Equation (GEE) model}
 \usage{
-ds.gee(data = NULL, formula = NULL, family = NULL, corStructure = "ar1",
+ds.gee(formula = NULL, family = NULL, data = NULL, corStructure = "ar1",
   clusterID = NULL, startCoeff = NULL, userMatrix = NULL, maxit = 20,
-  display = FALSE, datasources = NULL)
+  checks = TRUE, display = FALSE, datasources = NULL)
 }
 \arguments{
-  \item{data}{the name of the data frame that hold the
-  variables in the regression formula.}
-
   \item{formula}{a string character, the formula which
   describes the model to be fitted.}
 
   \item{family}{a character, the description of the error
   distribution: 'binomial', 'gaussian', 'Gamma' or
   'poisson'.}
+
+  \item{data}{the name of the data frame that hold the
+  variables in the regression formula.}
 
   \item{corStructure}{a character, the correlation
   structure: 'ar1', 'exchangeable', 'independence', 'fixed'
@@ -33,6 +33,15 @@ ds.gee(data = NULL, formula = NULL, family = NULL, corStructure = "ar1",
 
   \item{maxit}{an integer, the maximum number of iteration
   to use for convergence.}
+
+  \item{checks}{a boolean, if TRUE (default) checks that
+  takes 1-3min are carried out to verify that the variables
+  in the model are defined (exist) on the server site and
+  that they have the correct characteristics required to
+  fit a GEE. If FALSE (not recommended if you are not an
+  experienced user) no checks are carried except some very
+  basic ones and eventual error messages might not give
+  clear indications about the cause(s) of the error.}
 
   \item{display}{a boolean to display or not the
   intermediate results. Default is FALSE.}
@@ -71,7 +80,7 @@ through the data.frame.
   # load the login data file for the correlated data
   data(geeLoginData)
 
-  # login and assign all the stored variables
+  # login and assign all the stored variables to R
   opals <- datashield.login(logins=geeLoginData,assign=TRUE)
 
   # set some parameters for the function 9the rest are set to default values)
@@ -82,10 +91,10 @@ through the data.frame.
   mycorr <- 'ar1'
 
   # run a GEE analysis with the above specifed parameters
-  xx <- ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
+  ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
 
-# clear the Datashield R sessions and logout
-datashield.logout(opals)
+  # clear the Datashield R sessions and logout
+  datashield.logout(opals)
 
 }
 }

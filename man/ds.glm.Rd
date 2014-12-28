@@ -13,13 +13,13 @@ ds.glm(formula = NULL, data = NULL, family = NULL, offset = NULL,
   \item{family}{a description of the error distribution
   function to use in the model}
 
-  \item{offset}{null or a numreric vector that can be used
-  to specify an a priori known component to be included in
-  the linear predictor during fitting.}
-
   \item{offset}{a character, null or a numeric vector that
   can be used to specify an a priori known component to be
   included in the linear predictor during fitting.}
+
+  \item{weights}{a character, the name of an optional
+  vector of 'prior weights' to be used in the fitting
+  process. Should be NULL or a numeric vector.}
 
   \item{data}{a character, the name of an optional data
   frame containing the variables in in the \code{formula}.
@@ -86,11 +86,11 @@ sitting on distinct servers by sending
 {
 
 # load the file that contains the login details
-data(logindata)
+data(glmLoginData)
 
 # login and assign some variables to R
 myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
-opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
+opals <- datashield.login(logins=glmLoginData,assign=TRUE,variables=myvar)
 
 # Example 1: fit a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
 mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL+GENDER', data='D', family='binomial')
@@ -113,5 +113,9 @@ datashield.logout(opals)
 }
 \author{
 Burton,P;Gaye,A;Laflamme,P
+}
+\seealso{
+\code{ds.lexus} for 'ds.glm' in survival analysis using
+piecewise exponential regression
 }
 

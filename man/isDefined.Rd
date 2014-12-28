@@ -1,6 +1,6 @@
 \name{isDefined}
 \alias{isDefined}
-\title{Checks if the objecs are defined in studies}
+\title{Checks if objects are defined in studies}
 \usage{
 isDefined(datasources = NULL, obj = NULL)
 }

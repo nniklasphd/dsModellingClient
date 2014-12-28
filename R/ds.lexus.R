@@ -36,10 +36,10 @@
 #' @examples {
 #' 
 #'   # load the file that contains the login details
-#'   data(survival_logindata)
+#'   data(survivalLoginData)
 #' 
 #'   # login and assign all the variables to R
-#'   opals <- datashield.login(logins=survival_logindata,assign=TRUE)
+#'   opals <- datashield.login(logins=survivalLoginData,assign=TRUE)
 #' 
 #'   # this example shows how to run survival analysis in H-DataSHIELD using the 'piecewise exponential regression' method
 #' 
@@ -63,16 +63,16 @@
 #'   # use glm to fit a poisson model and include a factor for the time intervals ('TIMEID') to have different rates.
 #'   # The vector 'SURVIVALTIME' (the time elapsed between start of follow up failure/censoring) and the vector 'TIMEID' 
 #'   # which allows for different rates are generated when the initial table got expanded via the function 'ds.lxus'. 
-#'   In the below model the log of the survival time is used as an offset (some known information to be included in the model).
+#'   # In the below model the log of the survival time is used as an offset (some known information to be included in the model).
 #'   
 #'   # generate a vector of log survival time values
 #'   ds.assign(toAssign='log(D_expanded$SURVIVALTIME)', newobj='logSurvival')
 #'   
 #'   # Fit the GLM - the outcome is failure status
-#'   mod <- ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
+#'   ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
 #'  
-#' # clear the Datashield R sessions and logout
-#' datashield.logout(opals) 
+#'   # clear the Datashield R sessions and logout
+#'   datashield.logout(opals) 
 #' }
 #'
 ds.lexus <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){

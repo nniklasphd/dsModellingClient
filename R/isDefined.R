@@ -1,5 +1,5 @@
 #' 
-#' @title Checks if the objecs are defined in studies
+#' @title Checks if objects are defined in studies
 #' @description This is an internal function.
 #' @details In DataSHIELD an object included in analysis must be defined (i.e. exists)
 #' in all the studies. If not the process should halt.
