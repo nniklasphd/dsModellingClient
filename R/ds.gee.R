@@ -107,7 +107,7 @@ ds.gee <- function(formula=NULL, family=NULL, data=NULL, corStructure='ar1', clu
   # or the user has not supplied one matrix for each study throw an alert and stop process
   if(corStructure == "fixed"){
     if(is.null(userMatrix) | length(userMatrix) < length(datasources)) {
-      stop("Please provide one correlation matrix for each of the studies!", call.=FALSE)
+      stop("'corStructure' is set to 'fixed' - You must provide one correlation matrix for each of the studies!", call.=FALSE)
     }
   }
   

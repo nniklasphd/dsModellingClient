@@ -37,7 +37,7 @@ geeChecks <- function(formula, data, datasources){
         lengthDcomplete <- datashield.aggregate(datasources[j],paste0("length(Dcomplete)"))[[1]]
         nrowD <- datashield.aggregate(datasources[j], paste0("dim(", data, ")"))[[1]][1]
         if(lengthDcomplete != nrowD){
-          stop("The input dataset ", data,  " in ", stdnames[j] , " contains one or more missing values. Only complete datasets are allowed in GEE analysis.", call.=FALSE)
+          stop(paste0("Missing value(s) in ",data,  " in ", stdnames[j] , ". Only complete datasets are allowed in GEE analysis. TIP: use 'ds.subset' to obtain a complete subset of ", data), call.=FALSE)
         }else{
           inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
           if(length(inputterms) > 1){
