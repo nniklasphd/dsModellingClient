@@ -1,8 +1,8 @@
-\name{ds.lexus}
-\alias{ds.lexus}
+\name{ds.lexis}
+\alias{ds.lexis}
 \title{Generates an expanded version of a dataset that contains survival data}
 \usage{
-ds.lexus(data = NULL, intervalWidth = NULL, idCol = NULL,
+ds.lexis(data = NULL, intervalWidth = NULL, idCol = NULL,
   entryCol = NULL, exitCol = NULL, statusCol = NULL, variables = NULL,
   newobj = NULL, datasources = NULL)
 }
@@ -96,10 +96,10 @@ the covariates to be included via the argument 'variables'.
   bh <- c(2,1,3,0.5,1.5,2)
 
   # expand the original table (e.g the survial time of each individual is split into 'pieces' equal to the intervals specified above
-  # we use the function 'ds.lexus' which expands the original table and saves the expanded table on the server site.
+  # we use the function 'ds.lexis' which expands the original table and saves the expanded table on the server site.
   # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
   # to indicate the variables to include if you have many variables and wants to use only a subset of those.
-  ds.lexus(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
+  ds.lexis(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
 
   # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
   ds.colnames('D_expanded')

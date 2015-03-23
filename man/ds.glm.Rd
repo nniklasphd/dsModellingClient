@@ -2,9 +2,9 @@
 \alias{ds.glm}
 \title{Runs a combined GLM analysis of non-pooled data}
 \usage{
-ds.glm(formula = NULL, data = NULL, family = NULL, offset = NULL,
-  weights = NULL, checks = TRUE, maxit = 15, CI = 0.95,
-  viewIter = FALSE, datasources = NULL)
+ds.glm(formula = NULL, data = NULL, family = NULL, startBetas = NULL,
+  offset = NULL, weights = NULL, checks = FALSE, maxit = 15,
+  CI = 0.95, viewIter = FALSE, datasources = NULL)
 }
 \arguments{
   \item{formula}{a character, a formula which describes the
@@ -12,6 +12,9 @@ ds.glm(formula = NULL, data = NULL, family = NULL, offset = NULL,
 
   \item{family}{a description of the error distribution
   function to use in the model}
+
+  \item{startBetas}{starting values for the parameters in
+  the linear predictor}
 
   \item{offset}{a character, null or a numeric vector that
   can be used to specify an a priori known component to be
@@ -30,10 +33,9 @@ ds.glm(formula = NULL, data = NULL, family = NULL, offset = NULL,
   takes 1-3min are carried out to verify that the variables
   in the model are defined (exist) on the server site and
   that they have the correct characteristics required to
-  fit a GLM. If FALSE (not recommended if you are not an
-  experienced user) no checks are carried except some very
-  basic ones and eventual error messages might not give
-  clear indications about the cause(s) of the error.}
+  fit a GLM. The default value is FALSE because checks
+  lengthen the runtime and are mainly meant to be # used as
+  help to look for causes of eventual errors.}
 
   \item{maxit}{the number of iterations of IWLS used
   instructions to each computer requesting non-disclosing
@@ -85,30 +87,34 @@ sitting on distinct servers by sending
 \examples{
 {
 
-# load the file that contains the login details
-data(glmLoginData)
+ # load the file that contains the login details
+ data(glmLoginData)
 
-# login and assign some variables to R
-myvar <- list("DIS_DIAB","PM_BMI_CONTINUOUS","LAB_HDL", "GENDER")
-opals <- datashield.login(logins=glmLoginData,assign=TRUE,variables=myvar)
+ # login and assign all the variables to R
+ opals <- datashield.login(logins=glmLoginData, assign=TRUE)
 
-# Example 1: fit a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
-mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL+GENDER', data='D', family='binomial')
+ # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
+ mod <- ds.glm(formula='D$DIS_DIAB~D$GENDER+D$PM_BMI_CONTINUOUS+D$LAB_HDL', family='binomial')
+ mod
+ # Example 2: run the above GLM model without an intercept
+ # (produces separate baseline estimates for Male and Female)
+ mod <- ds.glm(formula='D$DIS_DIAB~0+D$GENDER+D$PM_BMI_CONTINUOUS+D$LAB_HDL', family='binomial')
+ mod
+ # Example 3: run the above GLM with interaction between GENDER and PM_BMI_CONTINUOUS
+ mod <- ds.glm(formula='D$DIS_DIAB~D$GENDER*D$PM_BMI_CONTINUOUS+D$LAB_HDL', family='binomial')
+ mod
+ # Example 4: Fit a standard Gaussian linear model with an interaction
+ mod <- ds.glm(formula='D$PM_BMI_CONTINUOUS~D$DIS_DIAB*D$GENDER+D$LAB_HDL', family='gaussian')
+ mod
+ # Example 5: now run a GLM where the error follows a poisson distribution
+ # P.S: A poisson model requires a numeric vector as outcome so in this example we first convert
+ # the categorical BMI, which is of type 'factor', into a numeric vector
+ ds.asNumeric('D$PM_BMI_CATEGORICAL','BMI.123')
+ mod <- ds.glm(formula='BMI.123~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER', family='poisson')
+ mod
 
-# Example 2: fit the above GLM model with an intercept (eg. intercept = 1)
- mod <- ds.glm(formula='DIS_DIAB~1+PM_BMI_CONTINUOUS+LAB_HDL+GENDER', data='D', family='binomial')
-
-# Example 3: fit the above GLM with interaction HDL and GENDER
- mod <- ds.glm(formula='DIS_DIAB~PM_BMI_CONTINUOUS+LAB_HDL*GENDER', data='D', family='binomial')
-
-# Example 4: fit a GLM with an offset parameter: here use continuous BMI as offset parameter
- mod <- ds.glm(formula='LAB_HDL~GENDER', data="D", family='gaussian', offset="PM_BMI_CONTINUOUS")
-
-# Example 5: fit a GLM with an offset parameter: here use continuous BMI values as weigths
- mod <- ds.glm(formula='LAB_HDL~GENDER', data="D", family='gaussian', weights="PM_BMI_CONTINUOUS")
-
-# clear the Datashield R sessions and logout
-datashield.logout(opals)
+ # clear the Datashield R sessions and logout
+ datashield.logout(opals)
 }
 }
 \author{

@@ -1,7 +1,7 @@
 #' 
 #' @title Generates a default value to use as interval width
 #' @description This is an internal function required by the
-#' function \code{ds.lexus}
+#' function \code{ds.lexis}
 #' @details If the analyst has not provided an interval width
 #' used to generate the expanded table in a piecewise exponential
 #' regression, this functions generates a default value which is
@@ -13,7 +13,7 @@
 #' @keywords internal
 #' @return a numeric value
 #'
-lexusHelper1 <-  function(datasources, exitTime){
+lexisHelper1 <-  function(datasources, exitTime){
   
   # get the global mean
   cally <- paste0("meanDS(", exitTime, ")")

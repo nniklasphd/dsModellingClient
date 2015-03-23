@@ -1,8 +1,8 @@
-\name{lexusHelper1}
-\alias{lexusHelper1}
+\name{lexisHelper1}
+\alias{lexisHelper1}
 \title{Generates a default value to use as interval width}
 \usage{
-lexusHelper1(datasources, exitTime)
+lexisHelper1(datasources, exitTime)
 }
 \arguments{
   \item{datasources}{a list of opal object(s) obtained
@@ -18,7 +18,7 @@ a numeric value
 }
 \description{
 This is an internal function required by the function
-\code{ds.lexus}
+\code{ds.lexis}
 }
 \details{
 

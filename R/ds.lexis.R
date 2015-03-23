@@ -50,10 +50,10 @@
 #'   bh <- c(2,1,3,0.5,1.5,2)
 #' 
 #'   # expand the original table (e.g the survial time of each individual is split into 'pieces' equal to the intervals specified above
-#'   # we use the function 'ds.lexus' which expands the original table and saves the expanded table on the server site.
+#'   # we use the function 'ds.lexis' which expands the original table and saves the expanded table on the server site.
 #'   # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
 #'   # to indicate the variables to include if you have many variables and wants to use only a subset of those.
-#'   ds.lexus(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
+#'   ds.lexis(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
 #' 
 #'   # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
 #'   ds.colnames('D_expanded')
@@ -75,7 +75,7 @@
 #'   datashield.logout(opals) 
 #' }
 #'
-ds.lexus <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){
+ds.lexis <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){
   
   # if no opal login details are provided look for 'opal' objects in the environment
   if(is.null(datasources)){
@@ -104,7 +104,7 @@ ds.lexus <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, e
   
   # if no value provided for 'intervalWidth' generate one
   if(is.null(intervalWidth)){
-    intervalWidth <- lexusHelper1(datasources, paste0(data,"$",exitCol))
+    intervalWidth <- lexisHelper1(datasources, paste0(data,"$",exitCol))
   }
   
   if(is.null(newobj)){
@@ -112,7 +112,7 @@ ds.lexus <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, e
   }
   
   # call the server side function
-  cally <- call("lexusDS", data, intervalWidth, idCol, entryCol, exitCol, statusCol, variables)
+  cally <- call("lexisDS", data, intervalWidth, idCol, entryCol, exitCol, statusCol, variables)
   datashield.assign(datasources, newobj, cally)
   
   # check that the new object has been created if and display a message accordingly
