@@ -135,7 +135,7 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
   cally1 <- call('glmDS1', formula, family, beta.vect=beta.vect.temp, data)
   
   study.summary <- datashield.aggregate(datasources, cally1)
-  num.par.glm<-study.summary$study1$dimX[2]
+  num.par.glm <- study.summary[[1]][[1]][[2]]
   
   beta.vect.next <- rep(0,num.par.glm)
   beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
