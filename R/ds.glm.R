@@ -36,7 +36,8 @@
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
 #' @author Burton,P;Gaye,A;Laflamme,P
-#' @seealso \code{ds.lexus} for 'ds.glm' in survival analysis using piecewise exponential regression
+#' @seealso \code{ds.lexis} for survival analysis using piecewise exponential regression
+#' @seealso \code{ds.gee} for generalized estimating equation models
 #' @export
 #' @examples {
 #' 

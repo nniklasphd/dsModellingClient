@@ -29,6 +29,8 @@
 #' @return a list which contains the final coefficient estimates (beta values), the pooled alpha
 #' value and the pooled phi value.
 #' @author Gaye, A.; Jones EM.
+#' @seealso \code{ds.glm} for genralized linear models
+#' @seealso \code{ds.lexis} for survival analysis using piecewise exponential regression
 #' @export
 #' @examples {
 #' 

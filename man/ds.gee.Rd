@@ -106,4 +106,10 @@ Jones EM, Sheehan NA, Gaye A, Laflamme P, Burton P.
 Combined analysis of correlated data when data cannot be
 pooled. Stat 2013; 2: 72-85.
 }
+\seealso{
+\code{ds.glm} for genralized linear models
+
+\code{ds.lexis} for survival analysis using piecewise
+exponential regression
+}
 

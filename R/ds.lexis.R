@@ -32,6 +32,8 @@
 #' these objects also hold the data assigned to R, as a \code{data frame}, from opal datasources
 #' @return a dataframe, an expanded version of the input table.
 #' @author Gaye, A.
+#' @seealso \code{ds.glm} for genralized linear models
+#' @seealso \code{ds.gee} for generalized estimating equation models
 #' @export
 #' @examples {
 #' 

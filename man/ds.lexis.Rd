@@ -124,4 +124,9 @@ the covariates to be included via the argument 'variables'.
 \author{
 Gaye, A.
 }
+\seealso{
+\code{ds.glm} for genralized linear models
+
+\code{ds.gee} for generalized estimating equation models
+}
 
