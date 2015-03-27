@@ -121,9 +121,9 @@ sitting on distinct servers by sending
 Burton,P;Gaye,A;Laflamme,P
 }
 \seealso{
-\code{ds.lexis} for survival analysis using piecewise
+\link{ds.lexis} for survival analysis using piecewise
 exponential regression
 
-\code{ds.gee} for generalized estimating equation models
+\link{ds.gee} for generalized estimating equation models
 }
 

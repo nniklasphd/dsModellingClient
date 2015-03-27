@@ -36,8 +36,8 @@
 #' @return aic A version of Akaike's An Information Criterion, which tells how 
 #' well the model fits
 #' @author Burton,P;Gaye,A;Laflamme,P
-#' @seealso \code{ds.lexis} for survival analysis using piecewise exponential regression
-#' @seealso \code{ds.gee} for generalized estimating equation models
+#' @seealso \link{ds.lexis} for survival analysis using piecewise exponential regression
+#' @seealso \link{ds.gee} for generalized estimating equation models
 #' @export
 #' @examples {
 #' 
@@ -86,13 +86,23 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
   if(is.null(formula)){
     stop(" Please provide a valid regression formula!", call.=FALSE)
   }else{
-    # check if user gave offset in formula, if so stop and tell him to use the argument 'offset' to provide name of offset variable
-    if(grepl('offset', formula)){
-      stop(" Offset cannot be specified in 'formula'; please use the parameter 'offset' to provide the name of the offset vector!", call.=FALSE)
+    # check if user gave offset or weights in formula, if so stop and tell him to use the argument 'offset' or 'weights'
+    # to provide name of offset or weights variable
+    if(sum(as.numeric(grepl('offset', formula, ignore.case=TRUE)))>0 ||
+         sum(as.numeric(grepl('weights', formula, ignore.case=TRUE)))>0){
+      message("")
+      message("WARNING YOU MAY HAVE SPECIFIED AN OFFSET OR WEIGHT VARIABLE IN THE LINEAR PREDICTOR")
+      message("ds.glm REQUIRES THAT YOU SPECIFY THEM USING THE offset= OR weights= ARGUMENTS")
+      message("IF YOU HAVE SPECIFIED THEM IN THE LINEAR PREDICTOR THE MODEL WILL CRASH")
+      message("IF YOU HAPPEN TO HAVE FITTED A MODEL CONTAINING A VARIABLE NAME THAT INCLUDES")
+      message("THE STRING offset OR weights THE MODEL SHOULD NOT CRASH AND PLEASE IGNORE THIS WARNING")
+      message("")
+      formula <- as.formula(formula)
     }else{
       formula <- as.formula(formula)
     }
   }
+  
   
   # check that 'family' was set
   if(is.null(family)){
@@ -133,7 +143,7 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
   
   # identify the correct dimension for start beta coeffs by calling the 1st component of glmDS
   beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
-  cally1 <- call('glmDS1', formula, family, beta.vect=beta.vect.temp, data)
+  cally1 <- call('glmDS.PB.STEP1', formula, family, beta.vect=beta.vect.temp, data)
   
   study.summary <- datashield.aggregate(datasources, cally1)
   num.par.glm <- study.summary[[1]][[1]][[2]]
@@ -162,7 +172,7 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     message("Iteration ", iteration.count, "...")
     
     # now call second component of glmDS to generate score vectors and informations matrices
-    cally2 <- call('glmDS2', formula, family, beta.vect=beta.vect.temp, offset, weights, data)
+    cally2 <- call('glmDS.PB', formula, family, beta.vect=beta.vect.temp, offset, weights, data)
     
     study.summary <- datashield.aggregate(datasources, cally2)
     
@@ -257,16 +267,17 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     }
     
     family.identified<-1
+    t.df<-(nsubs.total-length(beta.vect.next))
     se.vect.final <- sqrt(diag(variance.covariance.matrix.total)) * sqrt(scale.par)
     z.vect.final<-beta.vect.final/se.vect.final
-    pval.vect.final<-2*pnorm(-abs(z.vect.final))
+    pval.vect.final<-2*pt(q=-abs(z.vect.final),df=t.df)
     parameter.names<-names(score.vect.total[,1])
     model.parameters<-cbind(beta.vect.final,se.vect.final,z.vect.final,pval.vect.final)
-    dimnames(model.parameters)<-list(parameter.names,c("Estimate","Std. Error","z-value","p-value"))
+    dimnames(model.parameters)<-list(parameter.names,c("Estimate","Std. Error","t-value","p-value"))
     
     if(CI > 0)
     {
-      ci.mult <- qnorm(1-(1-CI)/2)
+      ci.mult <- qt(p=(1-(1-CI)/2),df=t.df)
       low.ci.lp <- model.parameters[,1]-ci.mult*model.parameters[,2]
       hi.ci.lp <- model.parameters[,1]+ci.mult*model.parameters[,2]
       estimate.lp <- model.parameters[,1]
