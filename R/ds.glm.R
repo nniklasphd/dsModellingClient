@@ -143,7 +143,7 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
   
   # identify the correct dimension for start beta coeffs by calling the 1st component of glmDS
   beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
-  cally1 <- call('glmDS.PB.STEP1', formula, family, beta.vect=beta.vect.temp, data)
+  cally1 <- call('glmDS1', formula, family, beta.vect=beta.vect.temp, data)
   
   study.summary <- datashield.aggregate(datasources, cally1)
   num.par.glm <- study.summary[[1]][[1]][[2]]
@@ -172,7 +172,7 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     message("Iteration ", iteration.count, "...")
     
     # now call second component of glmDS to generate score vectors and informations matrices
-    cally2 <- call('glmDS.PB', formula, family, beta.vect=beta.vect.temp, offset, weights, data)
+    cally2 <- call('glmDS2', formula, family, beta.vect=beta.vect.temp, offset, weights, data)
     
     study.summary <- datashield.aggregate(datasources, cally2)
     
