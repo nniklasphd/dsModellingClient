@@ -33,8 +33,7 @@
 #' @return rank the numeric rank of the fitted linear model.
 #' @return family the \code{family} object used.
 #' @return linear.predictors the linear fit on link scale.
-#' @return aic A version of Akaike's An Information Criterion, which tells how 
-#' well the model fits
+#' 
 #' @author Burton,P;Gaye,A;Laflamme,P
 #' @seealso \link{ds.lexis} for survival analysis using piecewise exponential regression
 #' @seealso \link{ds.gee} for generalized estimating equation models
@@ -75,9 +74,9 @@
 #'  datashield.logout(opals) 
 #' }
 #'
-ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
+ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
-  # if no opal login details are provided look for 'opal' objects in the environment
+ # if no opal login details are provided look for 'opal' objects in the environment
   if(is.null(datasources)){
     datasources <- findLoginObjects()
   }
@@ -85,24 +84,21 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
   # verify that 'formula' was set
   if(is.null(formula)){
     stop(" Please provide a valid regression formula!", call.=FALSE)
-  }else{
-    # check if user gave offset or weights in formula, if so stop and tell him to use the argument 'offset' or 'weights'
-    # to provide name of offset or weights variable
-    if(sum(as.numeric(grepl('offset', formula, ignore.case=TRUE)))>0 ||
-         sum(as.numeric(grepl('weights', formula, ignore.case=TRUE)))>0){
-      message("")
-      message("WARNING YOU MAY HAVE SPECIFIED AN OFFSET OR WEIGHT VARIABLE IN THE LINEAR PREDICTOR")
-      message("ds.glm REQUIRES THAT YOU SPECIFY THEM USING THE offset= OR weights= ARGUMENTS")
-      message("IF YOU HAVE SPECIFIED THEM IN THE LINEAR PREDICTOR THE MODEL WILL CRASH")
-      message("IF YOU HAPPEN TO HAVE FITTED A MODEL CONTAINING A VARIABLE NAME THAT INCLUDES")
-      message("THE STRING offset OR weights THE MODEL SHOULD NOT CRASH AND PLEASE IGNORE THIS WARNING")
-      message("")
-      formula <- as.formula(formula)
-    }else{
-      formula <- as.formula(formula)
-    }
   }
-  
+
+# check if user gave offset or weights directly in formula, if so the argument 'offset' or 'weights'
+# to provide name of offset or weights variable
+    if(sum(as.numeric(grepl('offset', formula, ignore.case=TRUE)))>0 ||
+       sum(as.numeric(grepl('weights', formula, ignore.case=TRUE)))>0)
+	{
+       cat("\n\n WARNING: you may have specified an offset or regression weights")
+       cat("\n as part of the model formula. In ds.glm (unlike the usual glm in R)")
+       cat("\n you must specify an offset or weights separately from the formula")
+       cat("\n using the offset or weights argument.\n\n")
+	}
+
+  formula <- as.formula(formula)
+
   
   # check that 'family' was set
   if(is.null(family)){
@@ -114,54 +110,52 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     defined <- isDefined(datasources, data)
   }
   
-  # beginning of checks - the process stops if any of these checks fails #
+  # beginning of optional checks - the process stops if any of these checks fails #
   if(checks){
     message(" -- Verifying the variables in the model")
     # call the function that checks the variables in the formula are defined (exist) on the server site and are not missing at complete
-    glmChecks(formula, data, offset, weights, datasources)
+ 
+   glmChecks(formula, data, offset, weights, datasources)
   }else{
     #message("WARNING:'checks' is set to FALSE; variables in the model are not checked and error messages may not be intelligible!")
   }
-  
-  # number of 'valid' studies (those that passed the checks) and vector of beta values
-  numstudies <- length(datasources)
-  aa <- Reduce(paste, deparse(formula))
-  numBetas <- length(unlist(strsplit(gsub(" ", "", aa, fixed=TRUE) , split="+", fixed=TRUE)))  
-  if(is.null(startBetas)){
-    beta.vect.next <- rep(0, (numBetas+1)) # if no start beta values is provided the start values are set to 0 for each covariate
-  }else{
-    if((numBetas+1) != length(startBetas)){stop("The length of 'startBetas' must be equal the the number of covariates in 'formula! + one for the intercept", call.=FALSE)}
-    beta.vect.next <- startBetas
-  }
-  
-  # Iterations need to be counted. Start off with the count at 0
-  # and increment by 1 at each new iteration
+
+#MOVE ITERATION COUNT BEFORE ASSIGNMENT OF beta.vect.next  
+#Iterations need to be counted. Start off with the count at 0
+  #and increment by 1 at each new iteration
   iteration.count<-0
-  
+
   # number of 'valid' studies (those that passed the checks) and vector of beta values
   numstudies <- length(datasources)
+ 
+
+#ARBITRARY LENGTH FOR START BETAs AT THIS STAGE BUT IN LEGAL TRANSMISSION FORMAT ("0,0,0,0,0")
+ beta.vect.next <- rep(0,5)
+ beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
   
-  # identify the correct dimension for start beta coeffs by calling the 1st component of glmDS
-  beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
-  cally1 <- call('glmDS1', formula, family, beta.vect=beta.vect.temp, data)
-  
-  study.summary <- datashield.aggregate(datasources, cally1)
-  num.par.glm <- study.summary[[1]][[1]][[2]]
-  
-  beta.vect.next <- rep(0,num.par.glm)
-  beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
-  
-  
-  # Provide arbitrary starting value for deviance to enable subsequent calculation of the
-  # change in deviance between iterations
-  dev.old <- 9.99e+99
+
+#IDENTIFY THE CORRECT DIMENSION FOR START BETAs VIA CALLING FIRST COMPONENT OF glmDS
+ 
+   cally1 <- call('glmDS1', formula, family, data)
+   
+   study.summary <- datashield.aggregate(datasources, cally1)
+#  num.par.glm<-study.summary$study1$dimX[2]
+   num.par.glm<-study.summary[[1]][[1]][[2]]
+
+   beta.vect.next <- rep(0,num.par.glm)
+   beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
+ 
+
+  #Provide arbitrary starting value for deviance to enable subsequent calculation of the
+  #change in deviance between iterations
+  dev.old<-9.99e+99
   
   #Convergence state needs to be monitored.
-  converge.state <- FALSE
+  converge.state<-FALSE
   
-  # Define a convergence criterion. This value of epsilon corresponds to that used
-  # by default for GLMs in R (see section S3 for details)
-  epsilon <- 1.0e-08
+  #Define a convergence criterion. This value of epsilon corresponds to that used
+  #by default for GLMs in R (see section S3 for details)
+  epsilon<-1.0e-08
   
   f<-NULL
   
@@ -170,21 +164,21 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     iteration.count<-iteration.count+1
     
     message("Iteration ", iteration.count, "...")
-    
-    # now call second component of glmDS to generate score vectors and informations matrices
+   
+#NOW CALL SECOND COMPONENT OF glmDS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
     cally2 <- call('glmDS2', formula, family, beta.vect=beta.vect.temp, offset, weights, data)
-    
-    study.summary <- datashield.aggregate(datasources, cally2)
-    
-    
-    .select <- function(l, field) {
+
+      study.summary <- datashield.aggregate(datasources, cally2)
+
+      
+      .select <- function(l, field) {
       lapply(l, function(obj) {obj[[field]]})
     }
     
     info.matrix.total<-Reduce(f="+", .select(study.summary, 'info.matrix'))
     score.vect.total<-Reduce(f="+", .select(study.summary, 'score.vect'))
     dev.total<-Reduce(f="+", .select(study.summary, 'dev'))
-    
+
     message("CURRENT DEVIANCE:      ", dev.total)
     
     if(iteration.count==1) {
@@ -194,31 +188,31 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
       f <- study.summary[[1]]$family
     }
     
-    # create variance covariance matrix as inverse of information matrix
+    #Create variance covariance matrix as inverse of information matrix
     variance.covariance.matrix.total<-solve(info.matrix.total)
     
-    # create beta vector update terms
+    # Create beta vector update terms
     beta.update.vect<-variance.covariance.matrix.total %*% score.vect.total
     
-    # add update terms to current beta vector to obtain new beta vector for next iteration
-    if(iteration.count==1)
-    {
-      beta.vect.next<-rep(0,length(beta.update.vect))
-    }
+    #Add update terms to current beta vector to obtain new beta vector for next iteration
+	if(iteration.count==1)
+	{
+	 beta.vect.next<-rep(0,length(beta.update.vect))
+	}
+	
+	beta.vect.next<-beta.vect.next+beta.update.vect
+
+ 	beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
+
+
     
-    beta.vect.next<-beta.vect.next+beta.update.vect
-    
-    beta.vect.temp <- paste0(as.character(beta.vect.next), collapse=",")
-    
-    
-    
-    # calculate value of convergence statistic and test whether meets convergence criterion
+    #Calculate value of convergence statistic and test whether meets convergence criterion
     converge.value<-abs(dev.total-dev.old)/(abs(dev.total)+0.1)
     if(converge.value<=epsilon)converge.state<-TRUE
     if(converge.value>epsilon)dev.old<-dev.total
     
     if(viewIter){
-      # for ALL iterations summarise model state after current iteration
+      #For ALL iterations summarise model state after current iteration
       message("SUMMARY OF MODEL STATE after iteration ", iteration.count)
       message("Current deviance ", dev.total," on ",(nsubs.total-length(beta.vect.next)), " degrees of freedom")
       message("Convergence criterion ",converge.state," (", converge.value,")")
@@ -235,7 +229,7 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     }
   }
   if(!viewIter){
-    # for ALL iterations summarise model state after current iteration
+    #For ALL iterations summarise model state after current iteration
     message("SUMMARY OF MODEL STATE after iteration ", iteration.count)
     message("Current deviance ", dev.total," on ",(nsubs.total-length(beta.vect.next)), " degrees of freedom")
     message("Convergence criterion ",converge.state," (", converge.value,")")
@@ -251,10 +245,10 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     message("\nCurrent deviance: ", dev.total, "\n")
   }
   
-  # if convergence has been obtained, declare final (maximum likelihood) beta vector,
-  # and calculate the corresponding standard errors, z scores and p values
-  # (the latter two to be consistent with the output of a standard GLM analysis)
-  # then print out final model summary
+  #If convergence has been obtained, declare final (maximum likelihood) beta vector,
+  #and calculate the corresponding standard errors, z scores and p values
+  #(the latter two to be consistent with the output of a standard GLM analysis)
+  #Then print out final model summary
   if(converge.state)
   {
     family.identified<-0
@@ -267,17 +261,16 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     }
     
     family.identified<-1
-    t.df<-(nsubs.total-length(beta.vect.next))
     se.vect.final <- sqrt(diag(variance.covariance.matrix.total)) * sqrt(scale.par)
     z.vect.final<-beta.vect.final/se.vect.final
-    pval.vect.final<-2*pt(q=-abs(z.vect.final),df=t.df)
+    pval.vect.final<-2*pnorm(-abs(z.vect.final))
     parameter.names<-names(score.vect.total[,1])
     model.parameters<-cbind(beta.vect.final,se.vect.final,z.vect.final,pval.vect.final)
-    dimnames(model.parameters)<-list(parameter.names,c("Estimate","Std. Error","t-value","p-value"))
+    dimnames(model.parameters)<-list(parameter.names,c("Estimate","Std. Error","z-value","p-value"))
     
     if(CI > 0)
     {
-      ci.mult <- qt(p=(1-(1-CI)/2),df=t.df)
+      ci.mult <- qnorm(1-(1-CI)/2)
       low.ci.lp <- model.parameters[,1]-ci.mult*model.parameters[,2]
       hi.ci.lp <- model.parameters[,1]+ci.mult*model.parameters[,2]
       estimate.lp <- model.parameters[,1]
@@ -298,15 +291,15 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
         family.identified  <-  1
         num.parms <- length(low.ci.lp)
         estimate.natural <- exp(estimate.lp)/(1+exp(estimate.lp))
-        low.ci.natural <- exp(low.ci.lp)/(1+low.ci.lp)
-        hi.ci.natural <- exp(hi.ci.lp)/(1+hi.ci.lp)
+        low.ci.natural <- exp(low.ci.lp)/(1+exp(low.ci.lp))
+        hi.ci.natural <- exp(hi.ci.lp)/(1+exp(hi.ci.lp))
         if(num.parms > 1){
           estimate.natural[2:num.parms] <- exp(estimate.lp[2:num.parms])
           low.ci.natural[2:num.parms] <- exp(low.ci.lp[2:num.parms])
           hi.ci.natural[2:num.parms] <- exp(hi.ci.lp[2:num.parms])
           name1 <- paste0("low",CI,"CI.LP")
           name2 <- paste0("high",CI,"CI.LP")
-          name3 <- paste0("P_or_OR")
+          name3 <- paste0("P_OR")
           name4 <- paste0("low",CI,"CI.P_OR")
           name5 <- paste0("high",CI,"CI.P_OR")
         }       
@@ -318,12 +311,9 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
       if(family=="poisson"){
         family.identified <- 1
         num.parms <- length(low.ci.lp)
-        estimate.natural <- exp(estimate.lp)/(1+exp(estimate.lp))
-        low.ci.natural <- exp(low.ci.lp)/(1+low.ci.lp)
-        hi.ci.natural <- exp(hi.ci.lp)/(1+hi.ci.lp)
-        estimate.natural[2:num.parms] <- exp(estimate.lp[2:num.parms])
-        low.ci.natural[2:num.parms] <- exp(low.ci.lp[2:num.parms])
-        hi.ci.natural[2:num.parms] <- exp(hi.ci.lp[2:num.parms])
+        estimate.natural <- exp(estimate.lp)
+        low.ci.natural <- exp(low.ci.lp)
+        hi.ci.natural <- exp(hi.ci.lp)
         name1 <- paste0("low",CI,"CI.LP")
         name2 <- paste0("high",CI,"CI.LP")
         name3 <- paste0("EXPONENTIATED RR")
@@ -348,18 +338,29 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     
     model.parameters<-cbind(model.parameters,ci.mat)
     
-    if(is.null(offset)){
-      formulatext <- Reduce(paste, deparse(formula))
-    }else{
-      formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"))
-    }
+    if(!is.null(offset)&&!is.null(weights)){
+       formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"), paste0(" + weights(", weights, ")"))
+       }
+
+    if(!is.null(offset)&&is.null(weights)){
+       formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"))
+       }
+    if(is.null(offset)&&!is.null(weights)){
+       formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + weights(", weights, ")"))
+       }
+
+    if(is.null(offset)&&is.null(weights)){
+       formulatext <- Reduce(paste, deparse(formula))
+       }
     
-    glmds <- list(
+    
+      glmds <- list(
       formula=formulatext,
+	family=f,
       coefficients=model.parameters,
       dev=dev.total,
-      nsubs=nsubs.total,
       df=(nsubs.total-length(beta.vect.next)),
+ 	nsubs=nsubs.total,
       iter=iteration.count
     )
     
@@ -370,4 +371,6 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, startBetas=NULL, offset
     warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
     return(NULL)
   }
+  
 }
+
