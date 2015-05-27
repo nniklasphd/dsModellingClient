@@ -44,7 +44,7 @@
 #' 
 #'   # this example shows how to run survival analysis in H-DataSHIELD using the 'piecewise exponential regression' method
 #' 
-#'   # let us display the names of the variables in the original table (the table we assigned above and which by default is named 'D')
+#'   # let us display the names of the variables in the original table. 
 #'   ds.colnames('D')
 #' 
 #'   # specify some baseline hazard profile (i.e. the width of the intervals to be used)
@@ -54,10 +54,10 @@
 #'   # we use the function 'ds.lexis' which expands the original table and saves the expanded table on the server site.
 #'   # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
 #'   # to indicate the variables to include if you have many variables and wants to use only a subset of those.
-#'   ds.lexis(data='D', intervalWidth=bh, entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
+#'   ds.lexis(data='D', intervalWidth=bh, entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS", newobj='DX')
 #' 
-#'   # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
-#'   ds.colnames('D_expanded')
+#'   # let us display the names of variables in the expanded table. We choose to name the expanded dataset 'DX'.
+#'   ds.colnames('DX')
 #'
 #'   # Now fit a GLM with a poisson model
 #'   # there is a direct relationship between the poisson model with a log-time offset and the exponential model so we can 
@@ -67,10 +67,10 @@
 #'   # In the below model the log of the survival time is used as an offset (some known information to be included in the model).
 #'   
 #'   # generate a vector of log survival time values
-#'   ds.assign(toAssign='log(D_expanded$SURVIVALTIME)', newobj='logSurvival')
+#'   ds.assign(toAssign='log(DX$SURVIVALTIME)', newobj='logSurvival')
 #'   
 #'   # Fit the GLM - the outcome is failure status
-#'   ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
+#'   ds.glm(formula='DX$CENS~1+DX$TIMEID+DX$AGE.60+DX$GENDER+DX$NOISE.56+DX$PM10.16', family='poisson', offset='logSurvival')
 #'  
 #'   # clear the Datashield R sessions and logout
 #'   datashield.logout(opals) 
