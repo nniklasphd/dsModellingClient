@@ -4,7 +4,7 @@
 #' @details It splits the survial interval time of subjects into sub-intervals and reports the failure 
 #' status of the subjects at each sub-interval. Each of those sub-interval is given an id e.g. if the overall
 #' interval of a subject is split into 4 sub-interval, those sub-intervals have ids 1, 2, 3 and 4; so this is 
-#' basically the count of periods for each subject. The interval ids are held in a column named "TIMEID". 
+#' basically the count of periods for each subject. The interval identifiers are held in a column named "TIMEID". 
 #' The entry and exit times in the input table are used to compute the total survival time. 
 #' By default all the covariates in the input table are included in the expanded output table but it is 
 #' preferable to indicate the names of the covariates to be included via the argument 'variables'.
