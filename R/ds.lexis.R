@@ -13,7 +13,6 @@
 #' This can be one value (in which case all the intervals have same width) or several different values.
 #' If no value(s) are provided a single default value is used. That default value is the set to be the 
 #' 1/10th of the mean of the exit time values across all the studies.
-#' @param idCol a character the name of the column that holds the individual IDs of the subjects.
 #' @param entryCol a character, the name of the column that holds the entry times (i.e. start of follow up).
 #' If no name is provided the default is to set all the entry times to 0 in a column named "STARTTIME".
 #' A message is then printed to alert the user as this has serious consequences if the actual entry times are 
@@ -55,7 +54,7 @@
 #'   # we use the function 'ds.lexis' which expands the original table and saves the expanded table on the server site.
 #'   # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
 #'   # to indicate the variables to include if you have many variables and wants to use only a subset of those.
-#'   ds.lexis(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
+#'   ds.lexis(data='D', intervalWidth=bh, entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
 #' 
 #'   # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
 #'   ds.colnames('D_expanded')
@@ -77,7 +76,7 @@
 #'   datashield.logout(opals) 
 #' }
 #'
-ds.lexis <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){
+ds.lexis <- function(data=NULL, intervalWidth=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){
   
   # if no opal login details are provided look for 'opal' objects in the environment
   if(is.null(datasources)){
@@ -87,11 +86,6 @@ ds.lexis <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, e
   # check if user have provided a the name of the input dataset
   if(is.null(data)){
     stop("Please provide the name of the dataset to expand!", call.=FALSE)
-  }
-  
-  # check if user have provided the name of the column that holds the subject ids
-  if(is.null(idCol)){
-    stop("Please provide the name of the column that holds the subject IDs!", call.=FALSE)
   }
   
   # check if user have provided the name of the column that holds failure information
@@ -114,7 +108,7 @@ ds.lexis <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, e
   }
   
   # call the server side function
-  cally <- call("lexisDS", data, intervalWidth, idCol, entryCol, exitCol, statusCol, variables)
+  cally <- call("lexisDS", data, intervalWidth, entryCol, exitCol, statusCol, variables)
   datashield.assign(datasources, newobj, cally)
   
   # check that the new object has been created if and display a message accordingly

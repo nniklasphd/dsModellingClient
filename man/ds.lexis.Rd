@@ -4,9 +4,9 @@
 \alias{ds.lexis}
 \title{Generates an expanded version of a dataset that contains survival data}
 \usage{
-ds.lexis(data = NULL, intervalWidth = NULL, idCol = NULL,
-  entryCol = NULL, exitCol = NULL, statusCol = NULL, variables = NULL,
-  newobj = NULL, datasources = NULL)
+ds.lexis(data = NULL, intervalWidth = NULL, entryCol = NULL,
+  exitCol = NULL, statusCol = NULL, variables = NULL, newobj = NULL,
+  datasources = NULL)
 }
 \arguments{
 \item{data}{a character, the name of the table that holds the original data, this is the data to be expanded.}
@@ -15,8 +15,6 @@ ds.lexis(data = NULL, intervalWidth = NULL, idCol = NULL,
 This can be one value (in which case all the intervals have same width) or several different values.
 If no value(s) are provided a single default value is used. That default value is the set to be the
 1/10th of the mean of the exit time values across all the studies.}
-
-\item{idCol}{a character the name of the column that holds the individual IDs of the subjects.}
 
 \item{entryCol}{a character, the name of the column that holds the entry times (i.e. start of follow up).
 If no name is provided the default is to set all the entry times to 0 in a column named "STARTTIME".
@@ -78,7 +76,7 @@ preferable to indicate the names of the covariates to be included via the argume
   # we use the function 'ds.lexis' which expands the original table and saves the expanded table on the server site.
   # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
   # to indicate the variables to include if you have many variables and wants to use only a subset of those.
-  ds.lexis(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
+  ds.lexis(data='D', intervalWidth=bh, entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
 
   # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
   ds.colnames('D_expanded')
