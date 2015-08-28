@@ -9,35 +9,63 @@ ds.lexis(data = NULL, intervalWidth = NULL, idCol = NULL,
   newobj = NULL, datasources = NULL)
 }
 \arguments{
-\item{data}{a character, the name of the table that holds the original data, this is the data to be expanded.}
+\item{data}{a character, the name of a dataframe containing the data to be expanded. Often, the dataframe
+will also hold the original total-survival-time and final-censoring variables but the lexis function is deliberately
+set up so those can also be specified as coming either from a different data frame or from the root area of your
+analysis (i.e. lying outside any dataframe)table that holds the original data, this is the data to be expanded.}
 
-\item{intervalWidth,}{a numeric vector which gives the chosen width of the intervals ('pieces').
-This can be one value (in which case all the intervals have same width) or several different values.
-If no value(s) are provided a single default value is used. That default value is the set to be the
-1/10th of the mean of the exit time values across all the studies.}
+\item{intervalWidth,}{a numeric vector specifying the length of each interval. If the total sum of the
+duration across all intervals is less than the maximum follow-up of any individual in any contributing
+study, a final interval will be added by ds.lexis extending from the end of the last interval specified
+to the maximum follow-up time. If a single numeric value is specified rather than a vector, ds.lexis
+will keep adding intervals of the length specified until the maximum follow-up time in any single
+study is exceeded.}
 
-\item{idCol}{a character the name of the column that holds the individual IDs of the subjects.}
+\item{idCol}{a character the name of the column that holds the individual IDs of the subjects. This may
+be numeric or character. Note that when an particular variable is identified as being the ID to Opal
+when the data are first transferred to Opal, the ID often ends up being of class character and will typically
+be sorted in 'alphabetic' order (treating each digit as a character) rather than numeric. So, in a dataset
+containing sequential IDs 1-1000, the order allocated by Opal will be mean that the first thirteen rows
+in the original dataset (before expansion) will correspond to the original IDs:
+1,10,100,101,102,103,104,105,106,107,108,109,11 (analogous to b, ba, baa, bab, bac, bad, bae, baf, bag,
+bah, bai, baj, bb ...) in an alphabetic listing: NOT to the expected order 1,2,3,4,5,6,7,8,9,10,11,12,13 ...
+This alphabetic order or the ID listing will then carry forward to the expanded dataset. But the
+nature and order of the original ID variable held in idCol doesn't matter to ds.lexis. Provided every
+individual appears only once in the original data set (before expansion) the order does not matter
+because ds.lexis works on its own unique numeric vector that is allocated from 1:M (where there are
+M individuals) in whatever order they appear in the original dataset. It is this ds.lexis sequentially
+allocated numeric ID vector that is ultimately combined with the interval period number to
+produce the expanded unique ID variable in the expanded data set (e.g. see 77.13 under 'details')}
 
 \item{entryCol}{a character, the name of the column that holds the entry times (i.e. start of follow up).
-If no name is provided the default is to set all the entry times to 0 in a column named "STARTTIME".
-A message is then printed to alert the user as this has serious consequences if the actual entry times are
-not 0 for all the subjects.}
+Rather than using a total survival time variable to identify the intervals to which any given individual
+is exposed, ds.lexis requires an initial entry time and a final exit time. If the data you wish to expand
+contain only a total survival time variable and (as is most common) every individual starts follow-up
+at time 0, the entry times should all be specified as zero, and the exit times as the total survival time.
+So, entryCol should either be the name of the column holding the entry time of each individual, or else
+if no entryCol is specified it will be defaulted to zero anyway and put into a variable called STARTTIME
+in the expanded data set.}
 
-\item{exitCol}{a character, the name of the column that holds the exit times (i.e. end of follow up).}
+\item{exitCol}{a character, the name of the column that holds the exit times (i.e. end of follow up).
+If the entry times are set, or defaulted, to zero, the exitCol variable should contain the total
+survival times.}
 
-\item{statusCol}{a character, the name of the column that holds the 'failure' status of each subject,
-tells whether or not a subject has been censored.}
+\item{statusCol}{a character, the name of the column that holds the failure/censoring status of each subject
+(see under details).}
 
-\item{variables}{a character vector, the column names of the variables (covariates) to include in the
-final expanded table. The input table might have a large number of covariates and if only some of those
-variables are relevant for the sought analysis it make sense to only include those. By default (i.e. if
-no variables are indicated) all the covariates in the inout table are included and this will lengthen the
-run time of the function.}
+\item{variables}{a character vector, the column names of the variables to include in the
+final expanded table. If the 'variables' argument is not set (is null) but the 'data' argument is set
+the expanded data set will contain all variables in the dataframe identified by the 'data' argument.
+If neither the 'data' or 'variables' arguments are set, the expanded data set will only include the
+ID, exposure time and failure/censoring status variables which may still be useful for plotting survival data
+once these become available.}
 
-\item{newobj}{the name of the output expanded table. By default the name is the name of the input table with
-the suffixe "_expanded".}
+\item{newobj}{the name of the new dataframe containing the expanded data set. If you specify a name,
+that name will be used, but if no name is specified it will be defaulted to 'name of dataframe specified by
+data argument' with '_expanded' as a suffix. If you use the client side function ds.ls() after running
+ds.lexis the new dataframe you have created should be listed.}
 
-\item{datasources}{a list of opal object(s) obtained after login to opal servers;
+\item{datasources}{As in all client-side functions, a list of opal object(s) obtained after login to opal servers;
 these objects also hold the data assigned to R, as a \code{data frame}, from opal datasources}
 }
 \value{
@@ -49,59 +77,93 @@ This function is meant to be used as part of a piecewise regression analysis.
 \details{
 
 
-It splits the survial interval time of subjects into sub-intervals and reports the failure
-status of the subjects at each sub-interval. Each of those sub-interval is given an id e.g. if the overall
-interval of a subject is split into 4 sub-interval, those sub-intervals have ids 1, 2, 3 and 4; so this is
-basically the count of periods for each subject. The interval ids are held in a column named "TIMEID".
-The entry and exit times in the input table are used to compute the total survival time.
-By default all the covariates in the input table are included in the expanded output table but it is
-preferable to indicate the names of the covariates to be included via the argument 'variables'.
+It splits the survival interval time of subjects into pre-specified sub-intervals that are each assumed
+to encompass a constant base-line hazard which means a constant instantaneous risk of death). In the expanded dataset
+a row is included for every interval in which a given individual is followed regardless how short that follow-up may be.
+Each row includes: (1) a variable indicating failure status for a particular interval in that interval also known
+as censoring status (1=failed, died, relapsed, developed a disease etc, 0= e.g. lost-to-follow-up or
+passed right through the interval without failing); (2) an exposure-time variable indicating the duration of
+exposure-to-risk-of-failure the corresponding individual experienced in that interval before he/she failed or
+was censored). To illustrate, an individual who survives through 5 such intervals and then dies/fails in the 6th interval
+will be allocated a 0 value for the failure status/censoring variable in the first five intervals and a 1 value
+in the 6th, while the exposure-time variable will be equal to the total length of the relevant interval
+in each of the first five intervals, and the additional length of time they survived in the sixth interval
+before they failed or were censored. If they survive through the first interval and they are censored in the
+second interval, the failure-status variable will take the value 0 in both intervals. The expanded data set
+also includes a unique ID in a form such as 77.13 which identifies that row of the dataset as relating to the
+77th individual in the input data set (in whatever order they have been placed by Opal [which is often different to the
+original numeric order of the IDs that were actually specified to Opal]) and his/her experience (exposure-time and
+failure status)in the 14th interval. Note that .N indicates the N+1th interval because interval 1 has no
+suffix. The expanded data set also includes the original ID as specified to Opal,
+the total survival time (equivalent to the sum of the exposure times across all intervals) and the ultimate
+failure-status in the final interval to which they were exposed. The value of each of these variables is repeated in
+every row to which the corresponding individual contributes data (i.e. to every row corresponding to an interval
+in which that individual was followed). Finally, the expanded dataset contains any other variables pertaining
+to each individual that the user would like to  carry forwarded to a survival analysis based on the expanded
+data. The values of each of these variables are also repeated in every row corresponding to an interval in
+which that individual was followed.
 }
 \examples{
 {
+EXAMPLE 1
+In this example, the data to be expanded are held in a dataframe called 'CM'. The survival time intervals are to
+be 0<t<=2.5; 2.5<t<=5.0, 5.0<t<=7.5, up to the final interval of duration 2.5 that includes the maximum survival time.
+The original ID, entry-time, exit-time and censoring variables are all included in the original dataframe in variables
+CM$ID, CM$STARTTIME, CM$ENDTIME and CM$CENS. The expanded dataframe will be created with the name "EM$new" and the
+data will be held in a dataframe called 'expanded.table' inside EM$new.
 
-  # load the file that contains the login details
-  data(survivalLoginData)
+ds.lexis(data = "CM", intervalWidth = 2.5, idCol = "CM$ID",
+  entryCol = "CM$STARTTIME", exitCol = "CM$ENDTIME", statusCol = "CM$CENS",
+  newobj = "EM.new")
+ds.ls() #to confirm expanded dataframe created
 
-  # login and assign all the variables to R
-  opals <- datashield.login(logins=survivalLoginData,assign=TRUE)
+Please note, if the censoring variable had instead been held in a variable
+'CENSOR' (outside any dataframe) or in DF$died (inside a different dataframe called DF) then it would have been perfectly
+acceptable to specify statusCol="CENSOR" and/or statusCol="DF$died"
 
-  # this example shows how to run survival analysis in H-DataSHIELD using the 'piecewise exponential regression' method
+For illustration, the following is a schema of a typical set of variables you get
+in an expanded dataframe. Depending how the arguments of ds.lexis are specified
+some variables may be repeated:
 
-  # let us display the names of the variables in the original table (the table we assigned above and which by default is named 'D')
-  ds.colnames('D')
+A			B		C		D	E		F		G		H	I		J	 K		  L		M
+657         	657     2.054   1   657		983  	2  		1   2.054	0     13      1      2.3
+658         	658     0.348   0   658     984  	2    	0   0.348	0      8      1     -2.7
+659  	  	659		2.500   0   659     985  	2     	1   9.300	0    -21      1     -0.6
+659.1		659     2.500   0   659		985  	2      	1   9.300	0    -21      1     -0.6
+659.2		659     2.500   0   659		985  	2       1   9.300	0    -21      1     -0.6
+659.3		659     1.800 	1   659		985     2       1   9.300	0    -21      1     -0.6
 
-  # specify some baseline hazard profile (i.e. the width of the intervals to be used)
-  bh <- c(2,1,3,0.5,1.5,2)
+A = Expanded Unique ID - sequential ID allocated by ds.lexis combined with indicator of interval
+to which that row corresponds. No indicator = interval 1, .N = N+1th interval (e.g. see subject 659)
+B = Sequential ID allocated by ds.lexis
+C = Exposure time in corresponding interval (e.g. see subject 659)
+D = Failure/censoring status in corresponding interval (e.g. see subject 659)
+E = Repeat of Sequential ID allocated by ds.lexis
+F = Original ID allocated by Opal (note not in same order as Sequential ID)
+G = Study indicator (in this example these individuals are in study 2)
+H = Final failure/censoring status (note gets repeated across all intervals for any individual)
+I = Total survival time (note gets repeated across all intervals for any individual)
+J = Additional variable carried into expanded dataframe. In this case the variable is sex (0=male)
+      note repeated across all intervals for any individual.
+K = Additional variable carried into expanded dataframe.
+      note repeated across all intervals for any individual.
+L = Additional variable carried into expanded dataframe.
+      note repeated across all intervals for any individual.
+M = Additional variable carried into expanded dataframe.
+      note repeated across all intervals for any individual.
 
-  # expand the original table (e.g the survial time of each individual is split into 'pieces' equal to the intervals specified above
-  # we use the function 'ds.lexis' which expands the original table and saves the expanded table on the server site.
-  # we set the parameter 'variables' to NULL (default) which means include all the covariates in the expanded table - It is preferable
-  # to indicate the variables to include if you have many variables and wants to use only a subset of those.
-  ds.lexis(data='D', intervalWidth=bh, idCol="ID", entryCol="STARTTIME", exitCol="ENDTIME", statusCol="CENS")
 
-  # let us display the names of variables in the expanded table (by default it is the name of the priginal table followed by '_expanded')
-  ds.colnames('D_expanded')
-
-  # Now fit a GLM with a poisson model
-  # there is a direct relationship between the poisson model with a log-time offset and the exponential model so we can
-  # use glm to fit a poisson model and include a factor for the time intervals ('TIMEID') to have different rates.
-  # The vector 'SURVIVALTIME' (the time elapsed between start of follow up failure/censoring) and the vector 'TIMEID'
-  # which allows for different rates are generated when the initial table got expanded via the function 'ds.lxus'.
-  # In the below model the log of the survival time is used as an offset (some known information to be included in the model).
-
-  # generate a vector of log survival time values
-  ds.assign(toAssign='log(D_expanded$SURVIVALTIME)', newobj='logSurvival')
-
-  # Fit the GLM - the outcome is failure status
-  ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
-
-  # clear the Datashield R sessions and logout
-  datashield.logout(opals)
+EXAMPLE 2
+In this example, the survival time intervals are to be 0<t<=1; 1<t<=2.0, 2.0<t<=5.0, 5.0<t<=11.0,
+then 11.0<t<=maximum survival time in any study (if no survival time exceeds 11, the fifth interval
+will not appear in any row). No newobj is specified so the output dataframe will be named 'CM_expanded'.
+ds.lexis(data = "CM", intervalWidth = c(1,1,3,6), idCol = "CM$ID",
+  entryCol = "CM$STARTTIME", exitCol = "CM$ENDTIME", statusCol = "CM$CENS")
+ds.ls() #to confirm expanded dataframe created
 }
 }
 \author{
-Gaye, A.
+Gaye, A, Burton PR
 }
 \seealso{
 \code{ds.glm} for genralized linear models
