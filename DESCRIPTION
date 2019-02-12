@@ -8,3 +8,4 @@ Description: DataSHIELD client site functions for statistical modelling
 Depends:
     opal,
     dsBaseClient
+RoxygenNote: 6.1.1
