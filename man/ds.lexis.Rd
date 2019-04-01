@@ -37,8 +37,7 @@ run time of the function.}
 \item{newobj}{the name of the output expanded table. By default the name is the name of the input table with 
 the suffixe "_expanded".}
 
-\item{datasources}{a list of opal object(s) obtained after login to opal servers;
-these objects also hold the data assigned to R, as a \code{data frame}, from opal datasources}
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login.}
 }
 \value{
 a dataframe, an expanded version of the input table.
@@ -56,13 +55,13 @@ By default all the covariates in the input table are included in the expanded ou
 preferable to indicate the names of the covariates to be included via the argument 'variables'.
 }
 \examples{
-{
+\donttest{
 
   # load the file that contains the login details
   data(survivalLoginData)
 
   # login and assign all the variables to R
-  opals <- datashield.login(logins=survivalLoginData,assign=TRUE)
+  conns <- datashield.login(logins=survivalLoginData,assign=TRUE)
 
   # this example shows how to run survival analysis in H-DataSHIELD using the 'piecewise exponential regression' method
 
@@ -95,7 +94,7 @@ preferable to indicate the names of the covariates to be included via the argume
   ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
  
   # clear the Datashield R sessions and logout
-  datashield.logout(opals) 
+  datashield.logout(conns) 
 }
 
 }

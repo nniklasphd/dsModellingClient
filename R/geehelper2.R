@@ -1,4 +1,3 @@
-#'
 #' @title Produces the pooled beta values and standard errors
 #' @description This is an internal function required by the client
 #' function \code{ds.gee}.

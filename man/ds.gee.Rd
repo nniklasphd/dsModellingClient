@@ -37,8 +37,7 @@ of the error.}
 
 \item{display}{a boolean to display or not the intermediate results. Default is FALSE.}
 
-\item{datasources}{a list of opal object(s) obtained after login to opal servers;
-these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.}
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login.}
 }
 \value{
 a list which contains the final coefficient estimates (beta values), the pooled alpha
@@ -56,13 +55,13 @@ goes on until convergence is achieved. The input data should not contain missing
 The data must be in a data.frame obejct and the variables must be refer to through the data.frame.
 }
 \examples{
-{
+\donttest{
 
   # load the login data file for the correlated data
   data(geeLoginData)
   
   # login and assign all the stored variables to R
-  opals <- datashield.login(logins=geeLoginData,assign=TRUE)
+  conns <- datashield.login(logins=geeLoginData,assign=TRUE)
   
   # set some parameters for the function 9the rest are set to default values)
   myformula <- 'response~1+sex+age.60'
@@ -75,7 +74,7 @@ The data must be in a data.frame obejct and the variables must be refer to throu
   ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
   
   # clear the Datashield R sessions and logout
-  datashield.logout(opals) 
+  datashield.logout(conns) 
 
 }
 

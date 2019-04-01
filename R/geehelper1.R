@@ -1,13 +1,12 @@
-#'
 #' @title Computes the pooled parameters alpha and phi
 #' @description This is an internal function required by the client
 #' function \code{ds.gee}.
 #' @param N a numeric vector, the sample sizes of the studies
 #' @param npara the number of parameters/columns of the design matrix, for a regression
 #' model, generated from the table of individual level data.
-#' @param M_study 
-#' @param alphaM
-#' @param sum_p
+#' @param M_study ?
+#' @param alphaM ?
+#' @param sum_p ?
 #' @param corStructure an integer that set the correlation structure: 1 for 'ar1',
 #' 2 for 'exchangeable', 3 for 'independence', 4 for for 'fixed' and 5 for an 
 #' 'unstructure' correlation structure.

@@ -37,10 +37,7 @@ parameters are the same as those obtained if the data were 'physically' pooled.}
 \item{viewIter}{a boolean, tells whether the results of the intermediate iterations
 should be printed on screen or not. Default is FALSE (i.e. only final results are shown).}
 
-\item{datasources}{a list of opal object(s) obtained after login to opal servers;
-these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.}
-
-\item{startBetas}{starting values for the parameters in the linear predictor}
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login.}
 }
 \value{
 coefficients a named vector of coefficients
@@ -65,13 +62,13 @@ It enables a parallelized analysis of individual-level data sitting
 on distinct servers by sending
 }
 \examples{
-{
+\donttest{
 
  # load the file that contains the login details
- data(glmLoginData)
+ logindata <- DSLite::setupCNSIMTest(c("dsBase", "dsModelling"))
 
  # login and assign all the variables to R
- opals <- datashield.login(logins=glmLoginData, assign=TRUE)
+ conns <- datashield.login(logins=logindata, assign=TRUE)
 
  # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
  mod <- ds.glm(formula='D$DIS_DIAB~D$GENDER+D$PM_BMI_CONTINUOUS+D$LAB_HDL', family='binomial')
@@ -89,12 +86,12 @@ on distinct servers by sending
  # Example 5: now run a GLM where the error follows a poisson distribution
  # P.S: A poisson model requires a numeric vector as outcome so in this example we first convert
  # the categorical BMI, which is of type 'factor', into a numeric vector
- ds.asNumeric('D$PM_BMI_CATEGORICAL','BMI.123')
+ dsBaseClient::ds.asNumeric('D$PM_BMI_CATEGORICAL','BMI.123')
  mod <- ds.glm(formula='BMI.123~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER', family='poisson')
  mod
  
  # clear the Datashield R sessions and logout
- datashield.logout(opals) 
+ datashield.logout(conns) 
 }
 
 }

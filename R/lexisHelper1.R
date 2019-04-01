@@ -6,9 +6,7 @@
 #' used to generate the expanded table in a piecewise exponential
 #' regression, this functions generates a default value which is
 #' 1/10 of the global mean of the exit time values.
-#' @param datasources a list of opal object(s) obtained after login to opal servers;
-#' these objects also hold the data assigned to R, as a \code{data frame}, from opal 
-#' datasources
+#' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login.
 #' @param exitTime a character, the name of the column that holds the exit times.
 #' @keywords internal
 #' @return a numeric value

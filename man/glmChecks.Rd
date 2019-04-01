@@ -18,8 +18,7 @@ included in the linear predictor during fitting.}
 \item{weights}{a character, the name of an optional vector of 'prior weights' to be used in the fitting 
 process. Should be NULL or a numeric vector.}
 
-\item{datasources}{a list of opal object(s) obtained after login in to opal servers;
-these objects hold also the data assign to R, as \code{dataframe}, from opal datasources.}
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login.}
 }
 \value{
 an integer 0 if check was passed and 1 if failed

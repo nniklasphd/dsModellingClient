@@ -1,11 +1,44 @@
 Package: dsModellingClient
-Maintainer: <datashield@obiba.org>
-Author: <datashield@obiba.org>
-Version: 4.1.2
-License: GPL-3
-Title: DataSHIELD client site functions for statistical modelling
-Description: DataSHIELD client site functions for statistical modelling
+Version: 4.2.0
+Authors@R:
+    c(person(given = "Amadou",
+             family = "Gaye",
+             role = "aut",
+             comment = c(ORCID = "0000-0002-1180-2792")),
+      person(given = "Yannick",
+             family = "Marcon",
+             role = c("ctb", "cre"),
+             email = "yannick.marcon@obiba.org",
+             comment = c(ORCID = "0000-0003-0138-2023")),
+      person(given = "Julia",
+             family = "Isaeva",
+             role = "ctb",
+             comment = c(ORCID = "0000-0003-4926-1220")),
+      person(given = "Stuart",
+             family = "Weather",
+             role = "ctb"),
+      person(given = "Demetris",
+             family = "Avraam",
+             role = "ctb"))
+Title: DataSHIELD Modelling Functions
+Description: DataSHIELD modelling functions for the client site. 
+    DataSHIELD is an infrastructure and series of R packages that 
+    enables the remote and non-disclosive analysis of sensitive research data. 
+    This package defines the API that is to be implemented by DataSHIELD-aware 
+    data repositories.
 Depends:
-    opal,
+    DSI
+Imports:
+    stats
+Suggests: 
+    knitr,
+    DSLite,
+    dsBase,
     dsBaseClient
+License: GPL-3
+URL: http://datashield.ac.uk
+BugReports: https://github.com/datashield/dsModellingClient
 RoxygenNote: 6.1.1
+VignetteBuilder: knitr
+Encoding: UTF-8
+LazyData: true

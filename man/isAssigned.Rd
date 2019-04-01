@@ -7,8 +7,7 @@
 isAssigned(datasources = NULL, newobj = NULL)
 }
 \arguments{
-\item{datasources}{a list of opal object(s) obtained after login in to opal servers;
-these objects hold also the data assign to R, as \code{dataframe}, from opal datasources.}
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login.}
 
 \item{newobj}{a character, the name the object to look for.}
 }

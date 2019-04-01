@@ -5,7 +5,6 @@
 #' on distinct servers by sending 
 #' @param formula a character, a formula which describes the model to be fitted
 #' @param family a description of the error distribution function to use in the model
-#' @param startBetas starting values for the parameters in the linear predictor
 #' @param offset  a character, null or a numeric vector that can be used to specify an a priori known component 
 #' to be included in the linear predictor during fitting.
 #' @param weights  a character, the name of an optional vector of 'prior weights' to be used in the fitting 
@@ -23,8 +22,8 @@
 #' @param CI a numeric, the confidence interval.
 #' @param viewIter a boolean, tells whether the results of the intermediate iterations
 #' should be printed on screen or not. Default is FALSE (i.e. only final results are shown).
-#' @param datasources a list of opal object(s) obtained after login to opal servers;
-#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
+#' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login.
+#' 
 #' @return coefficients a named vector of coefficients
 #' @return residuals the 'working' residuals, that is the residuals in the final
 #' iteration of the IWLS fit.
@@ -38,13 +37,14 @@
 #' @seealso \link{ds.lexis} for survival analysis using piecewise exponential regression
 #' @seealso \link{ds.gee} for generalized estimating equation models
 #' @export
-#' @examples {
+#' @import utils
+#' @examples \donttest{
 #' 
 #'  # load the file that contains the login details
-#'  data(glmLoginData)
+#'  logindata <- DSLite::setupCNSIMTest(c("dsBase", "dsModelling"))
 #' 
 #'  # login and assign all the variables to R
-#'  opals <- datashield.login(logins=glmLoginData, assign=TRUE)
+#'  conns <- datashield.login(logins=logindata, assign=TRUE)
 #' 
 #'  # Example 1: run a GLM without interaction (e.g. diabetes prediction using BMI and HDL levels and GENDER)
 #'  mod <- ds.glm(formula='D$DIS_DIAB~D$GENDER+D$PM_BMI_CONTINUOUS+D$LAB_HDL', family='binomial')
@@ -66,19 +66,19 @@
 #'  # Example 5: now run a GLM where the error follows a poisson distribution
 #'  # P.S: A poisson model requires a numeric vector as outcome so in this example we first convert
 #'  # the categorical BMI, which is of type 'factor', into a numeric vector
-#'  ds.asNumeric('D$PM_BMI_CATEGORICAL','BMI.123')
+#'  dsBaseClient::ds.asNumeric('D$PM_BMI_CATEGORICAL','BMI.123')
 #'  mod <- ds.glm(formula='BMI.123~D$PM_BMI_CONTINUOUS+D$LAB_HDL+D$GENDER', family='poisson')
 #'  mod
 #'  
 #'  # clear the Datashield R sessions and logout
-#'  datashield.logout(opals) 
+#'  datashield.logout(conns) 
 #' }
 #'
 ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=15, CI=0.95, viewIter=FALSE, datasources=NULL) {
   
- # if no opal login details are provided look for 'opal' objects in the environment
+ # look for DS connections
   if(is.null(datasources)){
-    datasources <- findLoginObjects()
+    datasources <- datashield.connections_find()
   }
   
   # verify that 'formula' was set

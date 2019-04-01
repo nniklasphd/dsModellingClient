@@ -12,8 +12,7 @@ geeChecks(formula, data, datasources)
 \item{data}{a character, the name of an optional data frame containing the variables in 
 in the \code{formula}.}
 
-\item{datasources}{a list of opal object(s) obtained after login in to opal servers;
-these objects hold also the data assign to R, as \code{dataframe}, from opal datasources.}
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login.}
 }
 \value{
 an integer 0 if check was passed and 1 if failed

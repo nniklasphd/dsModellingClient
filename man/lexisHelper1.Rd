@@ -7,9 +7,7 @@
 lexisHelper1(datasources, exitTime)
 }
 \arguments{
-\item{datasources}{a list of opal object(s) obtained after login to opal servers;
-these objects also hold the data assigned to R, as a \code{data frame}, from opal 
-datasources}
+\item{datasources}{a list of \code{\link{DSConnection-class}} objects obtained after login.}
 
 \item{exitTime}{a character, the name of the column that holds the exit times.}
 }

@@ -24,21 +24,22 @@
 #' except some very basic ones and eventual error messages might not give clear indications about the cause(s)
 #' of the error.
 #' @param display a boolean to display or not the intermediate results. Default is FALSE.
-#' @param datasources a list of opal object(s) obtained after login to opal servers;
-#' these objects also hold the data assigned to R, as a \code{dataframe}, from opal datasources.
+#' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login.
+#' 
 #' @return a list which contains the final coefficient estimates (beta values), the pooled alpha
 #' value and the pooled phi value.
 #' @author Gaye, A.; Jones EM.
 #' @seealso \code{ds.glm} for genralized linear models
 #' @seealso \code{ds.lexis} for survival analysis using piecewise exponential regression
 #' @export
-#' @examples {
+#' @import DSI stats
+#' @examples \donttest{
 #' 
 #'   # load the login data file for the correlated data
 #'   data(geeLoginData)
 #'   
 #'   # login and assign all the stored variables to R
-#'   opals <- datashield.login(logins=geeLoginData,assign=TRUE)
+#'   conns <- datashield.login(logins=geeLoginData,assign=TRUE)
 #'   
 #'   # set some parameters for the function 9the rest are set to default values)
 #'   myformula <- 'response~1+sex+age.60'
@@ -51,7 +52,7 @@
 #'   ds.gee(data='D',formula=myformula,family=myfamily,corStructure=mycorr,clusterID=clusters,startCoeff=startbetas)
 #'   
 #'   # clear the Datashield R sessions and logout
-#'   datashield.logout(opals) 
+#'   datashield.logout(conns) 
 #' 
 #' }
 #' 
@@ -64,9 +65,9 @@ ds.gee <- function(formula=NULL, family=NULL, data=NULL, corStructure='ar1', clu
   # turn the input formula into an object of type 'formula', it is given as a string character
   formula <- as.formula(formula)
   
-  # if no opal login details are provided look for 'opal' objects in the environment
+  # look for DS connections
   if(is.null(datasources)){
-    datasources <- findLoginObjects()
+    datasources <- datashield.connections_find()
   }
   
   # check if user have provided the name of the dataset and if the dataset is defined

@@ -28,20 +28,19 @@
 #' run time of the function. 
 #' @param newobj the name of the output expanded table. By default the name is the name of the input table with 
 #' the suffixe "_expanded".
-#' @param datasources a list of opal object(s) obtained after login to opal servers;
-#' these objects also hold the data assigned to R, as a \code{data frame}, from opal datasources
+#' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login.
 #' @return a dataframe, an expanded version of the input table.
 #' @author Gaye, A.
 #' @seealso \code{ds.glm} for genralized linear models
 #' @seealso \code{ds.gee} for generalized estimating equation models
 #' @export
-#' @examples {
+#' @examples \donttest{
 #' 
 #'   # load the file that contains the login details
 #'   data(survivalLoginData)
 #' 
 #'   # login and assign all the variables to R
-#'   opals <- datashield.login(logins=survivalLoginData,assign=TRUE)
+#'   conns <- datashield.login(logins=survivalLoginData,assign=TRUE)
 #' 
 #'   # this example shows how to run survival analysis in H-DataSHIELD using the 'piecewise exponential regression' method
 #' 
@@ -74,14 +73,14 @@
 #'   ds.glm(formula='CENS~1+TIMEID+AGE.60+GENDER+NOISE.56+PM10.16', data='D_expanded', family='poisson', offset='logSurvival')
 #'  
 #'   # clear the Datashield R sessions and logout
-#'   datashield.logout(opals) 
+#'   datashield.logout(conns) 
 #' }
 #'
 ds.lexis <- function(data=NULL, intervalWidth=NULL, idCol=NULL, entryCol=NULL, exitCol=NULL, statusCol=NULL, variables=NULL, newobj=NULL, datasources=NULL){
   
-  # if no opal login details are provided look for 'opal' objects in the environment
+  # look for DS connections
   if(is.null(datasources)){
-    datasources <- findLoginObjects()
+    datasources <- datashield.connections_find()
   }
   
   # check if user have provided a the name of the input dataset

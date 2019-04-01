@@ -1,4 +1,3 @@
-#'
 #' @title Checks if the elements in a regression formula are defined and not empty
 #' @description This is an internal function required by the client
 #' function \code{ds.glm} to ensure all the variable in the LP are defined and not empty,
@@ -6,8 +5,8 @@
 #' @param formula an object of type formula, the lp formula
 #' @param data a character, the name of an optional data frame containing the variables in 
 #' in the \code{formula}.
-#' @param datasources a list of opal object(s) obtained after login in to opal servers;
-#' these objects hold also the data assign to R, as \code{dataframe}, from opal datasources.
+#' @param datasources a list of \code{\link{DSConnection-class}} objects obtained after login.
+#' 
 #' @keywords internal
 #' @return an integer 0 if check was passed and 1 if failed
 #' @author Gaye, A.
@@ -41,7 +40,7 @@ geeChecks <- function(formula, data, datasources){
         }else{
           inputterms <- unlist(strsplit(deparse(variables[[i]]), "\\$", perl=TRUE))
           if(length(inputterms) > 1){
-            if(!(inputerms[2] %in% colsD)){
+            if(!(inputterms[2] %in% colsD)){
               stop("The variable ", as.character(variables[[i]]),  " is not in the dataset ", data, " in ", stdnames[j], call.=FALSE)
             }
           }else{

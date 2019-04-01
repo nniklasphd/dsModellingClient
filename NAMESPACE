@@ -3,3 +3,6 @@
 export(ds.gee)
 export(ds.glm)
 export(ds.lexis)
+import(DSI)
+import(stats)
+import(utils)
