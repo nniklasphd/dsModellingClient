@@ -34,7 +34,8 @@ Suggests:
     knitr,
     DSLite,
     dsBase,
-    dsBaseClient
+    dsBaseClient,
+    testthat
 License: GPL-3
 URL: http://datashield.ac.uk
 BugReports: https://github.com/datashield/dsModellingClient
