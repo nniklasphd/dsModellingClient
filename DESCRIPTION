@@ -24,8 +24,6 @@ Title: DataSHIELD Modelling Functions
 Description: DataSHIELD modelling functions for the client site. 
     DataSHIELD is an infrastructure and series of R packages that 
     enables the remote and non-disclosive analysis of sensitive research data. 
-    This package defines the API that is to be implemented by DataSHIELD-aware 
-    data repositories.
 Depends:
     DSI
 Imports:
