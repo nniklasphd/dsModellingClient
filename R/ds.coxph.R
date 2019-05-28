@@ -59,10 +59,6 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, m
     stop("Please provide the terms columns", call.=FALSE)
   }
   
-  if(is.null(method)){
-    stop("Please provide the coxph method", call.=FALSE)
-  }
-  
   # iteration counter
   iteration.count <- 0
   
@@ -102,5 +98,7 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, m
       warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
       return(NULL)
   }
-  return(beta1)
+  result        <- as.vector(beta1)
+  names(result) <- rownames(beta1)
+  return(result)
 }
