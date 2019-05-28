@@ -33,14 +33,14 @@
 #' 
 #' }
 #' 
-ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, method = NULL, data = NULL, datasources = NULL){
+ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, method = NULL, data = NULL, maxit = 600, datasources = NULL){
   result <- NULL
   
   # if no opal login details are provided look for 'opal' objects in the environment
   if (is.null(datasources)){
     datasources <- findLoginObjects()
   }
-
+  
   if(!(is.null(data))){
     if (!isDefined(datasources, data)) {
       stop("Please provide a valid dataset", call.=FALSE)
@@ -63,8 +63,44 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, m
     stop("Please provide the coxph method", call.=FALSE)
   }
   
-  cally <- call('coxphDS', survival_time, survival_event, terms, method, data)
-  result <- datashield.aggregate(datasources, cally, async = TRUE)
+  # iteration counter
+  iteration.count <- 0
   
-  return(result)
+  # number of 'valid' studies (those that passed the checks) and vector of beta values
+  numstudies <- length(datasources)
+  
+  # Initialization
+  cally    <- call('coxphDS1', survival_time, survival_event, terms, method, data)
+  data_sum <- datashield.aggregate(datasources, cally, async = TRUE)
+  data_zzc <- Reduce(f="+", data_sum)
+  inv_ZZc  <- solve(data_zzc)
+   
+  # Algorithm
+  n_features      <- ncol(data_zzc)
+  beta1           <- matrix(rep(0, len=n_features))
+  converge.state  <- FALSE
+  epsilon         <- 1E-6
+  iteration.count <- 0
+  while(!converge.state && iteration.count < maxit) {
+    iteration.count <- iteration.count + 1
+    print(paste("Iteration:", iteration.count))
+    
+    beta0 <- beta1;
+    #IN LEGAL TRANSMISSION FORMAT ("0,0,0,0,0")
+    beta0_str <- paste0(as.character(beta0), collapse=",")
+
+    #NOW CALL SECOND COMPONENT OF coxphDS
+    cally2 <- call('coxphDS2',  survival_time, survival_event, terms, method, beta0_str, data)
+    study.summary <- datashield.aggregate(datasources, cally2, async = TRUE)
+
+    G <- Reduce(f = "+", study.summary)
+    beta1 = beta0 + inv_ZZc %*% as.vector(Conj(t.default(G)))
+    converge.state <- (sum(abs(beta0 - beta1)) <= epsilon)
+  }
+
+  if (!converge.state) {
+      warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
+      return(NULL)
+  }
+  return(beta1)
 }

@@ -2,25 +2,37 @@
 % Please edit documentation in R/ds.coxph.R
 \name{ds.coxph}
 \alias{ds.coxph}
-\title{Computes the statistical mean of a given vector}
+\title{Runs a cox proportional-hazards model.}
 \usage{
-ds.coxph(data, survival_time, survival_event, terms, datasources = NULL)
+ds.coxph(survival_time = NULL, survival_event = NULL, terms = NULL,
+  method = NULL, data = NULL, datasources = NULL)
 }
 \arguments{
+\item{survival_time}{a character, the name of a numerical vector}
+
+\item{survival_event}{a character, the name of a numerical vector}
+
+\item{terms}{a character, the name of a numerical vector}
+
+\item{method}{method for tie handling (e.g. "breslow" or "efron")}
+
+\item{data}{a character, the name of an optional data frame containing the variables in}
+
 \item{datasources}{a list of opal object(s) obtained after login in to opal servers;
 these objects hold also the data assign to R, as \code{data frame}, from opal datasources.}
-
-\item{x}{a character, the name of a numerical vector}
-
-\item{type}{a character which represents the type of analysis to carry out. 
-If \code{type} is set to 'combine', a global mean is calculated 
-if \code{type} is set to 'split', the mean is calculated separately for each study.}
 }
 \value{
-a numeric
+coefficients a named vector of coefficients
+
+residuals the 'working' residuals, that is the residuals in the final
+iteration of the IWLS fit.
+
+method the \code{method} object used.
+
+linear.predictors the linear fit on link scale.
 }
 \description{
-This function is similar to the R function \code{mean}.
+A function that fits a Cox proportional hazards regression model.
 }
 \details{
 It is a wrapper for the server side function.
@@ -31,15 +43,12 @@ It is a wrapper for the server side function.
   # load that contains the login details
   data(logindata)
 
-  # login and assign specific variable(s)
-  myvar <- list('LAB_TSC')
-  opals <- datashield.login(logins=logindata,assign=TRUE,variables=myvar)
+  # login
+  opals <- datashield.login(logins=logindata,assign=TRUE)
 
-  # Example 1: compute the pooled statistical mean of the variable 'LAB_TSC' - default behaviour
-  ds.mean(x='D$LAB_TSC')
-
-  # Example 2: compute the model
-  ds.mean(x='D$LAB_TSC')
+  # Example 1: run a Cox proportional-hazards model (e.g. survival vs race)
+  mod <- ds.coxph("D$time", "D$censor", "D$race", "breslow")
+  mod
 
   # clear the Datashield R sessions and logout
   datashield.logout(opals)
@@ -47,11 +56,6 @@ It is a wrapper for the server side function.
 }
 
 }
-\seealso{
-\code{ds.quantileMean} to compute quantiles.
-
-\code{ds.summary} to generate the summary of a variable.
-}
 \author{
-Gaye A., Isaeva I.
+Inberg, G
 }
