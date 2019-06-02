@@ -5,7 +5,7 @@
 \title{Runs a cox proportional-hazards model.}
 \usage{
 ds.coxph(survival_time = NULL, survival_event = NULL, terms = NULL,
-  method = NULL, data = NULL, datasources = NULL)
+  method = NULL, data = NULL, maxit = 600, datasources = NULL)
 }
 \arguments{
 \item{survival_time}{a character, the name of a numerical vector}
@@ -46,9 +46,9 @@ It is a wrapper for the server side function.
   # login
   opals <- datashield.login(logins=logindata,assign=TRUE)
 
-  # Example 1: run a Cox proportional-hazards model (e.g. survival vs race)
-  mod <- ds.coxph("D$time", "D$censor", "D$race", "breslow")
-  mod
+  # Example 1: run a Cox proportional-hazards model
+  beta <- ds.coxph(data = "D", survival_time = "D$TIME", survival_event = "D$CENSOR", 
+                   terms = "D$AAE,D$BDS,D$HU,D$CU,D$IVDUPN,D$IVDURN,D$NPDT,D$RACE,D$TREAT,D$SITE", maxit = 600)
 
   # clear the Datashield R sessions and logout
   datashield.logout(opals)
