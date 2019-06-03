@@ -3,10 +3,11 @@
 #' @description A function that fits a distributed Cox proportional hazards regression model.
 #' @details It enables a distributed approach of the Cox proportional model. The advantage is that (sensitive) data
 #' doesn't have to be uploaded to a central location for the calculations to be performed.
-#' @param survival_time a character, the name of a numerical vector
-#' @param survival_event a character, the name of a numerical vector
-#' @param terms a character, the name of a numerical vector
-#' @param data a character, the name of an optional data frame containing the variables in 
+#' @param data a character, the name of the table that holds the data.
+#' @param survival_time a character, the name of the survival time column.
+#' @param survival_event a character, the name of a the survival event column.
+#' @param terms a comma separated string containing the model features.
+#' @param maxit numeric, max number of algorithm iterations.
 #' @param datasources a list of opal object(s) obtained after login in to opal servers;
 #' these objects hold also the data assign to R, as \code{data frame}, from opal datasources.
 #' @return a named vector of feature weights
@@ -29,7 +30,7 @@
 #' 
 #' }
 #' 
-ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, data = NULL, maxit = 600, datasources = NULL){
+ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, terms = NULL, maxit = 600, datasources = NULL){
   result <- NULL
   
   # if no opal login details are provided look for 'opal' objects in the environment
@@ -62,7 +63,7 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, d
   numstudies <- length(datasources)
   
   # Initialization step1
-  cally         <- call('coxphDS1', survival_time, survival_event, terms, data)
+  cally         <- call('coxphDS1', survival_time, terms, data)
   study.summary <- datashield.aggregate(datasources, cally, async = TRUE)
   data_zzc      <- Reduce(f="+", as.vector(opal:::.select(study.summary, 'ZZvc')))
   study_length  <- lapply(opal:::.select(study.summary, 'time.values'), length)
