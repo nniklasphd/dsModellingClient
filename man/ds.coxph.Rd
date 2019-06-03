@@ -5,7 +5,7 @@
 \title{Runs a cox proportional-hazards model.}
 \usage{
 ds.coxph(survival_time = NULL, survival_event = NULL, terms = NULL,
-  method = NULL, data = NULL, maxit = 600, datasources = NULL)
+  data = NULL, maxit = 600, datasources = NULL)
 }
 \arguments{
 \item{survival_time}{a character, the name of a numerical vector}
@@ -14,22 +14,13 @@ ds.coxph(survival_time = NULL, survival_event = NULL, terms = NULL,
 
 \item{terms}{a character, the name of a numerical vector}
 
-\item{method}{method for tie handling (e.g. "breslow" or "efron")}
-
 \item{data}{a character, the name of an optional data frame containing the variables in}
 
 \item{datasources}{a list of opal object(s) obtained after login in to opal servers;
 these objects hold also the data assign to R, as \code{data frame}, from opal datasources.}
 }
 \value{
-coefficients a named vector of coefficients
-
-residuals the 'working' residuals, that is the residuals in the final
-iteration of the IWLS fit.
-
-method the \code{method} object used.
-
-linear.predictors the linear fit on link scale.
+a named vector of feature weights
 }
 \description{
 A function that fits a Cox proportional hazards regression model.

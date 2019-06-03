@@ -1,19 +1,15 @@
 #' 
-#' @title Runs a cox proportional-hazards model.
-#' @description A function that fits a Cox proportional hazards regression model.
-#' @details It is a wrapper for the server side function.
+#' @title Runs the distributed Cox model learning algorithm. 
+#' @description A function that fits a distributed Cox proportional hazards regression model.
+#' @details It enables a distributed approach of the Cox proportional model. The advantage is that (sensitive) data
+#' doesn't have to be uploaded to a central location for the calculations to be performed.
 #' @param survival_time a character, the name of a numerical vector
 #' @param survival_event a character, the name of a numerical vector
 #' @param terms a character, the name of a numerical vector
-#' @param method method for tie handling (e.g. "breslow" or "efron")
 #' @param data a character, the name of an optional data frame containing the variables in 
 #' @param datasources a list of opal object(s) obtained after login in to opal servers;
 #' these objects hold also the data assign to R, as \code{data frame}, from opal datasources.
-#' @return coefficients a named vector of coefficients
-#' @return residuals the 'working' residuals, that is the residuals in the final
-#' iteration of the IWLS fit.
-#' @return method the \code{method} object used.
-#' @return linear.predictors the linear fit on link scale.
+#' @return a named vector of feature weights
 #' @author Inberg, G
 #' @export
 #' @examples {
@@ -33,7 +29,7 @@
 #' 
 #' }
 #' 
-ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, method = NULL, data = NULL, maxit = 600, datasources = NULL){
+ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, data = NULL, maxit = 600, datasources = NULL){
   result <- NULL
   
   # if no opal login details are provided look for 'opal' objects in the environment
@@ -66,7 +62,7 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, m
   numstudies <- length(datasources)
   
   # Initialization step1
-  cally         <- call('coxphDS1', survival_time, survival_event, terms, method, data)
+  cally         <- call('coxphDS1', survival_time, survival_event, terms, data)
   study.summary <- datashield.aggregate(datasources, cally, async = TRUE)
   data_zzc      <- Reduce(f="+", as.vector(opal:::.select(study.summary, 'ZZvc')))
   study_length  <- lapply(opal:::.select(study.summary, 'time.values'), length)
@@ -75,7 +71,7 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, m
   
   # Initialization step2
   data_times_str <- paste0(as.character(data_times), collapse=",")
-  cally2         <- call('coxphDS2', survival_time, survival_event, terms, method, data_times_str, data)
+  cally2         <- call('coxphDS2', survival_time, survival_event, terms, data_times_str, data)
   study.summary  <- datashield.aggregate(datasources, cally2, async = TRUE)
   
   # Calculate study index, DI and sumZ
@@ -95,18 +91,18 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, m
     study_DI[[s]]   <- DI[idx]
     study_sumZ[[s]] <- sumZ[idx,]
   }
-   
-  # Algorithm
+
   n_features      <- ncol(data_zzc)
   beta1           <- matrix(rep(0, len=n_features))
   converge.state  <- FALSE
   epsilon         <- 1E-6
   iteration.count <- 0
+  # Calculate weights until convergence or until max iterations
   while(!converge.state && iteration.count < maxit) {
     iteration.count <- iteration.count + 1
     beta0           <- beta1;
     beta0_str       <- paste0(as.character(beta0), collapse=",")
-    cally3          <- call('coxphDS3', survival_time, survival_event, terms, method, beta0_str, data)
+    cally3          <- call('coxphDS3', survival_time, survival_event, terms, beta0_str, data)
     study.summary   <- datashield.aggregate(datasources, cally3, async = TRUE)
     
     thetac_addition     <- 0
@@ -122,13 +118,13 @@ ds.coxph = function(survival_time = NULL, survival_event = NULL, terms = NULL, m
       
       thetac[[s]]     <- rev(t(thetac_addition + apply(apply(ZBc[[s]], 2, rev), 2, cumsum)))
       thetac_addition <- thetac[[s]][[1]]
-      thetaZtmpc[[s]] = thetaZtmpc[[s]] / do.call("cbind", rep(list(thetac[[s]]), n_features))
-      thetaZc[[s]]    = thetaZtmpc[[s]][study_index[[s]],]
-      thetaZc[[s]]    = thetaZc[[s]] * do.call("cbind", rep(list(study_DI[[s]]), n_features))
-      Gvc[[s]]        = study_sumZ[[s]] - thetaZc[[s]]
+      thetaZtmpc[[s]] <- thetaZtmpc[[s]] / do.call("cbind", rep(list(thetac[[s]]), n_features))
+      thetaZc[[s]]    <- thetaZtmpc[[s]][study_index[[s]],]
+      thetaZc[[s]]    <- thetaZc[[s]] * do.call("cbind", rep(list(study_DI[[s]]), n_features))
+      Gvc[[s]]        <- study_sumZ[[s]] - thetaZc[[s]]
     }
-    G <- Reduce(f = "+", lapply(Gvc, colSums))
-    beta1 = beta0 + inv_ZZc %*% as.vector(Conj(t.default(G)))
+    G              <- Reduce(f = "+", lapply(Gvc, colSums))
+    beta1          <- beta0 + inv_ZZc %*% as.vector(Conj(t.default(G)))
     converge.state <- (sum(abs(beta0 - beta1)) <= epsilon)
   }
   if (!converge.state) {
