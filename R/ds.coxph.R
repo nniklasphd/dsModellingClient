@@ -22,8 +22,8 @@
 #'   opals <- datashield.login(logins=logindata,assign=TRUE)
 #' 
 #'   # Example 1: run a Cox proportional-hazards model
-#'   beta <- ds.coxph(data = "D", survival_time = "D$TIME", survival_event = "D$CENSOR", 
-#'                    terms = "D$AAE,D$BDS,D$HU,D$CU,D$IVDUPN,D$IVDURN,D$NPDT,D$RACE,D$TREAT,D$SITE", maxit = 600)
+#'   beta <- ds.coxph(data = "D", survival_time = "TIME", survival_event = "CENSOR", 
+#'                    terms = "AAE,BDS,HU,CU,IVDUPN,IVDURN,NPDT,RACE,TREAT,SITE", maxit = 500)
 #' 
 #'   # clear the Datashield R sessions and logout
 #'   datashield.logout(opals)
@@ -103,7 +103,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     iteration.count <- iteration.count + 1
     beta0           <- beta1;
     beta0_str       <- paste0(as.character(beta0), collapse=",")
-    cally3          <- call('coxphDS3', survival_time, survival_event, terms, beta0_str, data)
+    cally3          <- call('coxphDS3', survival_time, terms, beta0_str, data)
     study.summary   <- datashield.aggregate(datasources, cally3, async = TRUE)
     
     thetac_addition     <- 0

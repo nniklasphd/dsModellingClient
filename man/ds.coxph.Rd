@@ -2,19 +2,21 @@
 % Please edit documentation in R/ds.coxph.R
 \name{ds.coxph}
 \alias{ds.coxph}
-\title{Runs a cox proportional-hazards model.}
+\title{Runs the distributed Cox model learning algorithm.}
 \usage{
-ds.coxph(survival_time = NULL, survival_event = NULL, terms = NULL,
-  data = NULL, maxit = 600, datasources = NULL)
+ds.coxph(data = NULL, survival_time = NULL, survival_event = NULL,
+  terms = NULL, maxit = 600, datasources = NULL)
 }
 \arguments{
-\item{survival_time}{a character, the name of a numerical vector}
+\item{data}{a character, the name of the table that holds the data.}
 
-\item{survival_event}{a character, the name of a numerical vector}
+\item{survival_time}{a character, the name of the survival time column.}
 
-\item{terms}{a character, the name of a numerical vector}
+\item{survival_event}{a character, the name of a the survival event column.}
 
-\item{data}{a character, the name of an optional data frame containing the variables in}
+\item{terms}{a comma separated string containing the model features.}
+
+\item{maxit}{numeric, max number of algorithm iterations.}
 
 \item{datasources}{a list of opal object(s) obtained after login in to opal servers;
 these objects hold also the data assign to R, as \code{data frame}, from opal datasources.}
@@ -23,10 +25,11 @@ these objects hold also the data assign to R, as \code{data frame}, from opal da
 a named vector of feature weights
 }
 \description{
-A function that fits a Cox proportional hazards regression model.
+A function that fits a distributed Cox proportional hazards regression model.
 }
 \details{
-It is a wrapper for the server side function.
+It enables a distributed approach of the Cox proportional model. The advantage is that (sensitive) data
+doesn't have to be uploaded to a central location for the calculations to be performed.
 }
 \examples{
 {
@@ -38,8 +41,8 @@ It is a wrapper for the server side function.
   opals <- datashield.login(logins=logindata,assign=TRUE)
 
   # Example 1: run a Cox proportional-hazards model
-  beta <- ds.coxph(data = "D", survival_time = "D$TIME", survival_event = "D$CENSOR", 
-                   terms = "D$AAE,D$BDS,D$HU,D$CU,D$IVDUPN,D$IVDURN,D$NPDT,D$RACE,D$TREAT,D$SITE", maxit = 600)
+  beta <- ds.coxph(data = "D", survival_time = "TIME", survival_event = "CENSOR", 
+                   terms = "AAE,BDS,HU,CU,IVDUPN,IVDURN,NPDT,RACE,TREAT,SITE", maxit = 500)
 
   # clear the Datashield R sessions and logout
   datashield.logout(opals)
