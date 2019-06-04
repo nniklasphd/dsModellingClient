@@ -63,7 +63,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   numstudies <- length(datasources)
   
   # Initialization step1
-  cally         <- call('coxphDS1', survival_time, terms, data)
+  cally         <- call('coxphDS1', data, survival_time, terms)
   study.summary <- datashield.aggregate(datasources, cally, async = TRUE)
   data_zzc      <- Reduce(f="+", as.vector(opal:::.select(study.summary, 'ZZvc')))
   study_length  <- lapply(opal:::.select(study.summary, 'time.values'), length)
@@ -72,7 +72,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   
   # Initialization step2
   data_times_str <- paste0(as.character(data_times), collapse=",")
-  cally2         <- call('coxphDS2', survival_time, survival_event, terms, data_times_str, data)
+  cally2         <- call('coxphDS2', data, survival_time, survival_event, terms, data_times_str)
   study.summary  <- datashield.aggregate(datasources, cally2, async = TRUE)
   
   # Calculate study index, DI and sumZ
@@ -103,7 +103,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     iteration.count <- iteration.count + 1
     beta0           <- beta1;
     beta0_str       <- paste0(as.character(beta0), collapse=",")
-    cally3          <- call('coxphDS3', survival_time, terms, beta0_str, data)
+    cally3          <- call('coxphDS3', data, survival_time, terms, beta0_str)
     study.summary   <- datashield.aggregate(datasources, cally3, async = TRUE)
     
     thetac_addition     <- 0
