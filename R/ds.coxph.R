@@ -67,7 +67,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   study.summary <- datashield.aggregate(datasources, cally, async = TRUE)
   #data_zzc      <- Reduce(f="+", as.vector(opal:::.select(study.summary, 'ZZvc')))
   study_length  <- lapply(opal:::.select(study.summary, 'time.values'), length)
-  data_times    <- unique(unlist(opal:::.select(study.summary, 'time.values')))
+  data_times    <- sort(unique(unlist(opal:::.select(study.summary, 'time.values'))))
   #inv_ZZc       <- solve(data_zzc)
   
   # Initialization step2
@@ -80,7 +80,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   DI    <- Reduce(f="+", opal:::.select(study.summary, 'DI'))
   sumZ  <- Reduce(f="+", opal:::.select(study.summary, 'sum.Z'))
   study_index <- study_DI <- study_sumZ <- list()
-  index <- cumsum(c(0, index[1:(length(index)-1)])) + 1
+  #index <- cumsum(c(0, index[1:(length(index)-1)])) + 1
   index_str <- paste0(as.character(index),collapse=",")
   
  # for (s in 1:numstudies) {
