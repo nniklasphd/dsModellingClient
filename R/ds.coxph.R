@@ -65,10 +65,10 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   # Initialization step1
   cally         <- call('coxphDS1', data, survival_time, terms)
   study.summary <- datashield.aggregate(datasources, cally, async = TRUE)
-  data_zzc      <- Reduce(f="+", as.vector(opal:::.select(study.summary, 'ZZvc')))
+  #data_zzc      <- Reduce(f="+", as.vector(opal:::.select(study.summary, 'ZZvc')))
   study_length  <- lapply(opal:::.select(study.summary, 'time.values'), length)
   data_times    <- unique(unlist(opal:::.select(study.summary, 'time.values')))
-  inv_ZZc       <- solve(data_zzc)
+  #inv_ZZc       <- solve(data_zzc)
   
   # Initialization step2
   data_times_str <- paste0(as.character(data_times), collapse=",")
@@ -81,19 +81,22 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   sumZ  <- Reduce(f="+", opal:::.select(study.summary, 'sum.Z'))
   study_index <- study_DI <- study_sumZ <- list()
   index <- cumsum(c(0, index[1:(length(index)-1)])) + 1
-  for (s in 1:numstudies) {
-    if (s == 1) {
-      idx = (index <= study_length[[s]]) 
-      study_index[[s]] <- index[idx]
-    } else {
-      idx = (index > study_length[[s-1]])
-      study_index[[s]] = index[idx] - study_length[[s-1]] 
-    }
-    study_DI[[s]]   <- DI[idx]
-    study_sumZ[[s]] <- sumZ[idx,]
-  }
+  index_str <- paste0(as.character(index),collapse=",")
+  
+ # for (s in 1:numstudies) {
+ #   if (s == 1) {
+ #     idx = (index <= study_length[[s]]) 
+ #     study_index[[s]] <- index[idx]
+ #   } else {
+ #     idx = (index > study_length[[s-1]])
+ #     study_index[[s]] = index[idx] - study_length[[s-1]] 
+ #   }
+ #   study_DI[[s]]   <- DI[idx]
+ #   study_sumZ[[s]] <- sumZ[idx,]
+ # }
 
-  n_features      <- ncol(data_zzc)
+  #n_features      <- ncol(data_zzc)
+  n_features <- length(unlist(strsplit(terms,split=",")))
   beta1           <- matrix(rep(0, len=n_features))
   converge.state  <- FALSE
   epsilon         <- 1E-6
@@ -103,29 +106,45 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     iteration.count <- iteration.count + 1
     beta0           <- beta1;
     beta0_str       <- paste0(as.character(beta0), collapse=",")
-    cally3          <- call('coxphDS3', data, survival_time, terms, beta0_str)
+    cally3          <- call('coxphDS3', data, survival_time, terms, beta0_str, index_str)
     study.summary   <- datashield.aggregate(datasources, cally3, async = TRUE)
+	ebz  <- Reduce(f="+", opal:::.select(study.summary, 'ebz'))
+	zebz  <- Reduce(f="+", opal:::.select(study.summary, 'zebz'))
+	zzebz  <- Reduce(f="+", opal:::.select(study.summary, 'zzebz'))
+	
+	gradient <- matrix(colSums(sumZ-zebz*DI),n_features,1)
+	
+	for(i in 1:m)
+	{
+		for(j in 1:m)
+		{
+			zzebz[,i,j] <- zzebz[,i,j] - zebz[,i]*zebz[,j]
+		}
+	}
+	
+	neghessian <- apply(zzebz*DI,c(2,3),sum)
+	beta1 <- beta0 + solve(neghessian + diag(10^(-6),n_features)) %*% gradient
     
-    thetac_addition     <- 0
-    thetaZtmpc_addition <- 0
-    ZBc <- thetaZtmpc <- thetac <- thetaZc <- Gvc <- list()
+    #thetac_addition     <- 0
+    #thetaZtmpc_addition <- 0
+    #ZBc <- thetaZtmpc <- thetac <- thetaZc <- Gvc <- list()
     ## calculate Gvc
-    for (s in numstudies:1) {
-      ZBc[[s]]        <- study.summary[[s]]$exp.Zc.beta
-      thetaZtmpc[[s]] <- study.summary[[s]]$theta.Ztmpc
-      thetaZtmpc[[s]][nrow(thetaZtmpc[[s]]),] <- thetaZtmpc_addition + thetaZtmpc[[s]][nrow(thetaZtmpc[[s]]),]
-      thetaZtmpc[[s]]     <- apply(apply(apply(thetaZtmpc[[s]], 2, rev), 2, cumsum), 2, rev)
-      thetaZtmpc_addition <- thetaZtmpc[[s]][1,]
-      
-      thetac[[s]]     <- rev(t(thetac_addition + apply(apply(ZBc[[s]], 2, rev), 2, cumsum)))
-      thetac_addition <- thetac[[s]][[1]]
-      thetaZtmpc[[s]] <- thetaZtmpc[[s]] / do.call("cbind", rep(list(thetac[[s]]), n_features))
-      thetaZc[[s]]    <- thetaZtmpc[[s]][study_index[[s]],]
-      thetaZc[[s]]    <- thetaZc[[s]] * do.call("cbind", rep(list(study_DI[[s]]), n_features))
-      Gvc[[s]]        <- study_sumZ[[s]] - thetaZc[[s]]
-    }
-    G              <- Reduce(f = "+", lapply(Gvc, colSums))
-    beta1          <- beta0 + inv_ZZc %*% as.vector(Conj(t.default(G)))
+    #for (s in numstudies:1) {
+    #  ZBc[[s]]        <- study.summary[[s]]$exp.Zc.beta
+    #  thetaZtmpc[[s]] <- study.summary[[s]]$theta.Ztmpc
+    #  thetaZtmpc[[s]][nrow(thetaZtmpc[[s]]),] <- thetaZtmpc_addition + thetaZtmpc[[s]][nrow(thetaZtmpc[[s]]),]
+    #  thetaZtmpc[[s]]     <- apply(apply(apply(thetaZtmpc[[s]], 2, rev), 2, cumsum), 2, rev)
+    #  thetaZtmpc_addition <- thetaZtmpc[[s]][1,]
+    #  
+    #  thetac[[s]]     <- rev(t(thetac_addition + apply(apply(ZBc[[s]], 2, rev), 2, cumsum)))
+    #  thetac_addition <- thetac[[s]][[1]]
+    #  thetaZtmpc[[s]] <- thetaZtmpc[[s]] / do.call("cbind", rep(list(thetac[[s]]), n_features))
+    #  thetaZc[[s]]    <- thetaZtmpc[[s]][study_index[[s]],]
+    #  thetaZc[[s]]    <- thetaZc[[s]] * do.call("cbind", rep(list(study_DI[[s]]), n_features))
+    #  Gvc[[s]]        <- study_sumZ[[s]] - thetaZc[[s]]
+    #}
+    #G              <- Reduce(f = "+", lapply(Gvc, colSums))
+    #beta1          <- beta0 + inv_ZZc %*% as.vector(Conj(t.default(G)))
     converge.state <- (sum(abs(beta0 - beta1)) <= epsilon)
   }
   if (!converge.state) {
