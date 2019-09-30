@@ -77,6 +77,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   
   # Calculate study index, DI and sumZ
   index <- Reduce(f="+", opal:::.select(study.summary, 'index'))
+  index <- index+1
   DI    <- Reduce(f="+", opal:::.select(study.summary, 'DI'))
   sumZ  <- Reduce(f="+", opal:::.select(study.summary, 'sum.Z'))
   study_index <- study_DI <- study_sumZ <- list()
