@@ -115,9 +115,9 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
 	
 	gradient <- matrix(colSums(sumZ-zebz*DI),n_features,1)
 	
-	for(i in 1:m)
+	for(i in 1:n_features)
 	{
-		for(j in 1:m)
+		for(j in 1:n_features)
 		{
 			zzebz[,i,j] <- zzebz[,i,j] - zebz[,i]*zebz[,j]
 		}
