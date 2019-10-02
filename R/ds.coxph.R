@@ -128,8 +128,8 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
 	neghessian <- apply(zzebz*DI,c(2,3),sum)
 	print(neghessian)
 	print(gradient)
-	print(beta0)
 	beta1 <- beta0 + solve(neghessian + diag(10^(-6),n_features)) %*% gradient
+	print(beta1)
 	#beta1 <- beta0 + solve(neghessian) %*% gradient
     
     #thetac_addition     <- 0
