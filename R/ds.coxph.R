@@ -82,7 +82,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   sumZ  <- Reduce(f="+", opal:::.select(study.summary, 'sum.Z'))
   study_index <- study_DI <- study_sumZ <- list()
   #index <- cumsum(c(0, index[1:(length(index)-1)])) + 1
-  index_str <- paste0(as.character(index),collapse=",")
+  #index_str <- paste0(as.character(index),collapse=",")
   
  # for (s in 1:numstudies) {
  #   if (s == 1) {
@@ -107,7 +107,8 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     iteration.count <- iteration.count + 1
     beta0           <- beta1;
     beta0_str       <- paste0(as.character(beta0), collapse=",")
-    cally3          <- call('coxphDS3', data, survival_time, terms, beta0_str, index_str)
+    #cally3          <- call('coxphDS3', data, survival_time, terms, beta0_str, index_str)
+    cally3          <- call('coxphDS3', data, survival_time, terms, beta0_str, index)
     study.summary   <- datashield.aggregate(datasources, cally3, async = TRUE)
 	ebz  <- Reduce(f="+", opal:::.select(study.summary, 'ebz'))
 	zebz  <- Reduce(f="+", opal:::.select(study.summary, 'zebz'))
