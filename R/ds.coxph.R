@@ -81,8 +81,6 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   #index <- rev(index)
   DI    <- Reduce(f="+", opal:::.select(study.summary, 'DI'))
   sumZ  <- Reduce(f="+", opal:::.select(study.summary, 'sum.Z'))
-  print(DI)
-  print(sumZ)
   study_index <- study_DI <- study_sumZ <- list()
   #index <- cumsum(c(0, index[1:(length(index)-1)])) + 1
   #index_str <- paste0(as.character(index),collapse=",")
@@ -117,7 +115,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
 	zebz  <- Reduce(f="+", opal:::.select(study.summary, 'zebz'))
 	zzebz  <- Reduce(f="+", opal:::.select(study.summary, 'zzebz'))
 	
-	gradient <- matrix(colSums(sumZ-zebz/ebz*DI),n_features,1)
+	gradient <- matrix(colSums(sumZ)-colSums(zebz/ebz*DI),n_features,1)
 	
 	for(i in 1:n_features)
 	{
@@ -156,10 +154,10 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     #beta1          <- beta0 + inv_ZZc %*% as.vector(Conj(t.default(G)))
     converge.state <- (sum(abs(beta0 - beta1)) <= epsilon)
   }
-  #if (!converge.state) {
-  if (iteration.count==42) {
+  if (!converge.state) {
+  #if (iteration.count==42) {
       warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
-      return(list(beta1,beta0))
+  #    return(list(beta1,beta0))
   }
   return(beta1)
 }
