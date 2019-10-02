@@ -152,7 +152,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   }
   if (!converge.state) {
       warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
-      return(NULL)
+      return(list(beta1,beta0))
   }
   return(beta1)
 }
