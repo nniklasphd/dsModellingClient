@@ -84,8 +84,8 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   study_index <- study_DI <- study_sumZ <- list()
   #index <- cumsum(c(0, index[1:(length(index)-1)])) + 1
   #index_str <- paste0(as.character(index),collapse=",")
-  print(DI)
-  print(sumZ)
+  #print(DI)
+  #print(sumZ)
   
  # for (s in 1:numstudies) {
  #   if (s == 1) {
@@ -116,9 +116,9 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
 	ebz  <- Reduce(f="+", opal:::.select(study.summary, 'ebz'))
 	zebz  <- Reduce(f="+", opal:::.select(study.summary, 'zebz'))
 	zzebz  <- Reduce(f="+", opal:::.select(study.summary, 'zzebz'))
-	print(ebz)
-	print(zebz)
-	print(zzebz)
+	#print(ebz)
+	#print(zebz)
+	#print(zzebz)
 	
 	gradient <- matrix(colSums(sumZ)-colSums(zebz/ebz*DI),n_features,1)
 	
@@ -164,5 +164,6 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
       warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
   #    return(list(beta1,beta0))
   }
-  return(beta1)
+  return(list(beta1,sumZ,DI,ebz,zebz,zzebz))
+  #return(beta1)
 }
