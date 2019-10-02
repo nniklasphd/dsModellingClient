@@ -111,17 +111,17 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     cally3          <- call('coxphDS3', data, survival_time, survival_event, terms, beta0_str, data_times_str)
     #cally3          <- call('coxphDS3', data, survival_time, terms, beta0_str, index)
     study.summary   <- datashield.aggregate(datasources, cally3, async = TRUE)
-	#ebz  <- Reduce(f="+", opal:::.select(study.summary, 'ebz'))
+	ebz  <- Reduce(f="+", opal:::.select(study.summary, 'ebz'))
 	zebz  <- Reduce(f="+", opal:::.select(study.summary, 'zebz'))
 	zzebz  <- Reduce(f="+", opal:::.select(study.summary, 'zzebz'))
 	
-	gradient <- matrix(colSums(sumZ-zebz*DI),n_features,1)
+	gradient <- matrix(colSums(sumZ-zebz/ebz*DI),n_features,1)
 	
 	for(i in 1:n_features)
 	{
 		for(j in 1:n_features)
 		{
-			zzebz[,i,j] <- zzebz[,i,j] - zebz[,i]*zebz[,j]
+			zzebz[,i,j] <- zzebz[,i,j]/ebz - zebz[,i]*zebz[,j]/ebz^2
 		}
 	}
 	
