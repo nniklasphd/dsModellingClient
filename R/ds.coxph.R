@@ -150,7 +150,8 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     #beta1          <- beta0 + inv_ZZc %*% as.vector(Conj(t.default(G)))
     converge.state <- (sum(abs(beta0 - beta1)) <= epsilon)
   }
-  if (!converge.state) {
+  #if (!converge.state) {
+  if (iteration.count==42) {
       warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
       return(list(beta1,beta0))
   }
