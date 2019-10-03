@@ -164,6 +164,9 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
       warning(paste("Did not converge after", maxit, "iterations. Increase maxit parameter as necessary."))
   #    return(list(beta1,beta0))
   }
-  return(list(beta1,sumZ,DI,ebz,zebz,zzebz,gradient,neghessian))
+  se <- sqrt(diag(solve(neghessian)))
+  zvalue <- beta1/se
+  pvalue <- 2*pnorm(zvalue)
+  return(list(beta1,se,zvalue,pvalue))
   #return(beta1)
 }
