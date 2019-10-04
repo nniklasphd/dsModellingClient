@@ -56,16 +56,9 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
     stop("Please provide the terms columns", call.=FALSE)
   }
   
-  # iteration counter
-  iteration.count <- 0
-  
-  # number of 'valid' studies (those that passed the checks) and vector of beta values
-  numstudies <- length(datasources)
-  
   # Initialization step1
-  cally         <- call('coxphDS1', data, survival_time, terms)
+  cally         <- call('coxphDS1', data, survival_time)
   study.summary <- datashield.aggregate(datasources, cally, async = TRUE)
-  study_length  <- lapply(opal:::.select(study.summary, 'time.values'), length)
   data_times    <- sort(unique(unlist(opal:::.select(study.summary, 'time.values'))))
    
   # Initialization step2
@@ -76,8 +69,7 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   # Calculate study index, DI and sumZ
   DI    <- Reduce(f="+", opal:::.select(study.summary, 'DI'))
   sumZ  <- Reduce(f="+", opal:::.select(study.summary, 'sum.Z'))
-  study_index <- study_DI <- study_sumZ <- list()
- 
+  
   n_features <- length(unlist(strsplit(terms,split=",")))
   beta1           <- matrix(rep(0, len=n_features))
   converge.state  <- FALSE
