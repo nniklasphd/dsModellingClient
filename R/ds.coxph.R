@@ -110,6 +110,8 @@ ds.coxph = function(data = NULL, survival_time = NULL, survival_event = NULL, te
   }
   se <- sqrt(diag(solve(neghessian)))
   zvalue <- beta1/se
-  pvalue <- 2*pnorm(zvalue)
+  pvalue <- rep(0,length(zvalue))
+  for(i in 1:length(pvalue)){pvalue[i] <- 2*pnorm(zvalue[i],lower.tail=(zvalue[i]<0))}
+  #pvalue <- 2*pnorm(zvalue)
   return(list(beta1,se,zvalue,pvalue))
 }
